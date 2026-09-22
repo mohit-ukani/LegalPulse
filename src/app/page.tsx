@@ -1,69 +1,135 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { LegalDocument, Citation } from '@/lib/types';
+import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
+import { Navbar } from '@/components/layout/Navbar';
+import { LegalDisclaimerBanner } from '@/components/ui/LegalDisclaimerBanner';
+import { InteractivePdfViewer } from '@/components/viewer/InteractivePdfViewer';
+import { AnalysisWorkspace } from '@/components/analysis/AnalysisWorkspace';
+import { ComparisonWorkspace } from '@/components/comparison/ComparisonWorkspace';
+import { UploadModal } from '@/components/modals/UploadModal';
+import { ApiKeyModal } from '@/components/modals/ApiKeyModal';
 
 export default function Home() {
+  const [documents, setDocuments] = useState<LegalDocument[]>([SAMPLE_DOC_A, SAMPLE_DOC_B]);
+  const [currentDocId, setCurrentDocId] = useState<string>(SAMPLE_DOC_A.id);
+  const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
+  const [activeMode, setActiveMode] = useState<'workstation' | 'comparison'>('workstation');
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [apiKey, setApiKey] = useState<string>('');
+
+  // Load API key from localStorage if saved
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedKey = localStorage.getItem('legalpulse_gemini_key') || '';
+      setApiKey(savedKey);
+    }
+  }, []);
+
+  const handleSaveApiKey = (newKey: string) => {
+    setApiKey(newKey);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('legalpulse_gemini_key', newKey);
+    }
+  };
+
+  const currentDoc = documents.find((d) => d.id === currentDocId) || documents[0];
+
+  const handleDocumentLoaded = (newDoc: LegalDocument) => {
+    setDocuments((prev) => {
+      const exists = prev.some((d) => d.id === newDoc.id);
+      if (exists) return prev.map((d) => (d.id === newDoc.id ? newDoc : d));
+      return [newDoc, ...prev];
+    });
+    setCurrentDocId(newDoc.id);
+    setActiveCitation(null);
+  };
+
+  const handleCitationClick = (citation: Citation) => {
+    setActiveCitation(citation);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
+      {/* Top Navbar */}
+      <Navbar
+        currentDoc={currentDoc}
+        onSelectDoc={(id) => {
+          setCurrentDocId(id);
+          setActiveCitation(null);
+        }}
+        availableDocs={documents}
+        activeMode={activeMode}
+        onSelectMode={setActiveMode}
+        onOpenUpload={() => setUploadModalOpen(true)}
+        onOpenSettings={() => setApiKeyModalOpen(true)}
+        apiKeySet={Boolean(apiKey)}
+      />
+
+      {/* Legal Assistance Disclaimer Banner */}
+      <LegalDisclaimerBanner />
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-hidden">
+        {activeMode === 'comparison' ? (
+          /* Mode 2: Contract-vs-Contract Comparison View */
+          <ComparisonWorkspace
+            onBackToWorkstation={() => setActiveMode('workstation')}
+            onSelectDoc={(id) => {
+              setCurrentDocId(id);
+              setActiveMode('workstation');
+            }}
+          />
+        ) : (
+          /* Mode 1: Split-Screen Legal Workstation */
+          <div className="grid grid-cols-1 lg:grid-cols-2 h-full overflow-hidden">
+            {/* Left Panel: Interactive PDF Viewer & Citation Highlighter */}
+            <section
+              aria-label="PDF Document Viewer"
+              className="h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-border"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              <InteractivePdfViewer
+                document={currentDoc}
+                activeCitation={activeCitation}
+                onAskAboutText={(selectedText) => {
+                  // Switch to grounded chat and ask about selected text
+                  console.log('Selected text from document:', selectedText);
+                }}
+              />
+            </section>
+
+            {/* Right Panel: Executive Analysis Workspace */}
+            <section
+              aria-label="Legal Analysis Workspace"
+              className="h-full overflow-hidden bg-card"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+              <AnalysisWorkspace
+                document={currentDoc}
+                onCitationClick={handleCitationClick}
+                activeCitation={activeCitation}
+                onSwitchToComparison={() => setActiveMode('comparison')}
+              />
+            </section>
+          </div>
+        )}
       </main>
+
+      {/* Upload Modal */}
+      <UploadModal
+        isOpen={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onDocumentLoaded={handleDocumentLoaded}
+      />
+
+      {/* Gemini Settings Modal */}
+      <ApiKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
+        apiKey={apiKey}
+        onSaveApiKey={handleSaveApiKey}
+      />
     </div>
   );
 }
