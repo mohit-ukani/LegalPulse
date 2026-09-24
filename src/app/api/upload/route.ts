@@ -43,28 +43,60 @@ export async function POST(req: NextRequest) {
         pageText = fullText.slice(i * chunkSize, (i + 1) * chunkSize);
       }
 
-      // Detect clauses in the page text
+      // Advanced clause detection supporting SECTION, ARTICLE, CLAUSE, and numbered legal headings
       const clauses: DocumentClause[] = [];
-      const sectionMatches = pageText.match(/(SECTION\s+\d+[:\s\w]+|\d+\.\d+\s+[^:\n]+:)/gi);
+      const sectionRegex = /(SECTION\s+\d+(\.\d+)?[:\s\w-]+|ARTICLE\s+[IVX\d]+[:\s\w-]+|CLAUSE\s+\d+[:\s\w-]+|\d+\.\d+\s+[^:\n]{3,60}:?)/gi;
+      const matches: RegExpMatchArray[] = Array.from(pageText.matchAll(sectionRegex));
 
-      if (sectionMatches) {
-        sectionMatches.forEach((match: string, idx: number) => {
+      if (matches.length > 0) {
+        matches.forEach((m: RegExpMatchArray, idx: number) => {
+          const matchTitle = (m[0] || '').trim();
+          const matchIndex = m.index ?? 0;
+          const nextMatch = matches[idx + 1];
+          const nextMatchIndex = nextMatch ? (nextMatch.index ?? pageText.length) : pageText.length;
+          
+          // Extract specific paragraph excerpt for this clause
+          const clauseExcerpt = pageText
+            .slice(matchIndex, Math.min(nextMatchIndex, matchIndex + 350))
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const combinedText = `${matchTitle} ${clauseExcerpt}`.toLowerCase();
+
           const isHighRisk =
-            /bond|liquidated|clawback|non-compete|forfeit|penalty|unilateral/i.test(match);
+            /bond|liquidated damages|clawback|non-compete|forfeit|penalty|unilateral|worldwide restraint|waive.*salary/i.test(combinedText);
           const isMediumRisk =
-            /notice|bonus|discretionary|arbitration|indemnif/i.test(match);
+            /notice|bonus|discretionary|arbitration|indemnif|invention|intellectual property|attorney fee|exclusive/i.test(combinedText);
+
+          let category = 'Contractual Provision';
+          let implication = 'Standard legal condition. Verify reciprocal obligations.';
+
+          if (/notice|resignation/i.test(combinedText)) {
+            category = 'Termination & Notice';
+            implication = 'Defines notice period for resignation or termination. Check if employee buyout is permitted.';
+          } else if (/non-compete|restraint|compete/i.test(combinedText)) {
+            category = 'Restrictive Covenants';
+            implication = 'Restricts post-employment activities. Check whether mandatory paid garden leave is provided.';
+          } else if (/bond|liquidated|clawback|training/i.test(combinedText)) {
+            category = 'Financial Clawback';
+            implication = 'Imposes financial lock-in or repayment liability upon departure.';
+          } else if (/invention|intellectual property|patent/i.test(combinedText)) {
+            category = 'Intellectual Property';
+            implication = 'Governs ownership of software code and inventions created during employment.';
+          } else if (/arbitration|dispute|jurisdiction/i.test(combinedText)) {
+            category = 'Dispute Resolution';
+            implication = 'Specifies governing forum and dispute procedures. Verify mutual arbitrator selection.';
+          }
 
           clauses.push({
             id: `custom-c-${pageNumber}-${idx + 1}`,
             pageNumber,
-            sectionNumber: match.trim().slice(0, 30),
-            title: match.trim(),
-            content: pageText.slice(0, 200).trim(),
+            sectionNumber: matchTitle.split(/[:\n-]/)[0].trim().slice(0, 24),
+            title: matchTitle.slice(0, 60),
+            content: clauseExcerpt,
             riskLevel: isHighRisk ? 'high' : isMediumRisk ? 'medium' : 'low',
-            category: 'Contractual Provision',
-            implication: isHighRisk
-              ? 'Potentially one-sided or restrictive condition. Review closely with legal counsel.'
-              : 'Standard contractual clause.',
+            category,
+            implication,
           });
         });
       }

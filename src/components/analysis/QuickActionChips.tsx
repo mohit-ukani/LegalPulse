@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Scales,
   FileText,
+  Lock,
   Sparkle,
 } from '@phosphor-icons/react';
 import { QUICK_ACTIONS } from '@/lib/sample-data';
@@ -30,6 +31,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Lightbulb: <Lightbulb size={16} weight="bold" />,
   Scales: <Scales size={16} weight="bold" />,
   FileText: <FileText size={16} weight="bold" />,
+  Lock: <Lock size={16} weight="bold" />,
 };
 
 export function QuickActionChips({

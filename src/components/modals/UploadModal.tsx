@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   X,
   UploadSimple,
@@ -28,6 +28,18 @@ export function UploadModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Close on Escape key
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !loading) onClose();
+  }, [onClose, loading]);
+
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
 
@@ -95,7 +107,7 @@ export function UploadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
       <div className="relative w-full max-w-lg rounded-2xl bg-card border border-border shadow-2xl p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">
@@ -104,7 +116,7 @@ export function UploadModal({
               <UploadSimple size={18} weight="bold" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-foreground">
+              <h3 id="upload-modal-title" className="font-bold text-sm text-foreground">
                 Upload Legal Document (PDF)
               </h3>
               <p className="text-xs text-muted-foreground">

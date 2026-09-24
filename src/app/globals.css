@@ -139,3 +139,35 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Print layout for Executive Legal Memorandum */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  header,
+  nav,
+  aside,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  [role="dialog"] {
+    position: static !important;
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  [role="dialog"] > div {
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+

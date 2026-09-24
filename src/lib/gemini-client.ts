@@ -53,7 +53,7 @@ export async function queryDocumentWithGemini(
   if (genAI) {
     try {
       const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         systemInstruction: LEGAL_SYSTEM_PROMPT,
         generationConfig: {
           temperature: 0.1,
@@ -309,7 +309,63 @@ export function runDeterministicGroundedSearch(
     }
   }
 
-  // 7. Unknowns / Missing clauses handler (e.g. Parental Leave, Remote work allowance, 401k match)
+  // 7. Confidentiality & Non-Disclosure
+  if (normalizedQuery.includes('confidential') || normalizedQuery.includes('nda') || normalizedQuery.includes('trade secret') || normalizedQuery.includes('disclosure')) {
+    const confClauses = allClauses.filter((c) =>
+      c.title.toLowerCase().includes('confidential') || c.category.toLowerCase().includes('confidential') || c.content.toLowerCase().includes('confidential')
+    );
+
+    if (confClauses.length > 0) {
+      const primary = confClauses[0];
+      return {
+        isMissingInfo: false,
+        answer: `Under **${primary.sectionNumber}** (Page ${primary.pageNumber}), the contract sets out confidentiality terms: "${primary.content}". ${primary.implication} Verify whether non-technical commercial information is subjected to an indefinite confidentiality term or limited to a reasonable 3 to 5 year duration.`,
+        citations: confClauses.map((c) => ({
+          clauseId: c.id,
+          pageNumber: c.pageNumber,
+          sectionNumber: c.sectionNumber,
+          clauseTitle: c.title,
+          quote: c.content,
+          relevanceExplanation: c.implication,
+          riskLevel: c.riskLevel,
+        })),
+        suggestedQuestions: [
+          'Can the non-disclosure obligation for general business information be limited to 3-5 years post-employment?',
+          'Does the definition of Confidential Information properly carve out publicly known information or prior knowledge?',
+        ],
+      };
+    }
+  }
+
+  // 8. Indemnification & Liability
+  if (normalizedQuery.includes('indemnif') || normalizedQuery.includes('liability') || normalizedQuery.includes('fee shifting') || normalizedQuery.includes('attorney fee') || normalizedQuery.includes('legal cost')) {
+    const indemClauses = allClauses.filter((c) =>
+      c.title.toLowerCase().includes('indemnif') || c.title.toLowerCase().includes('fee') || c.category.toLowerCase().includes('legal exposure') || c.content.toLowerCase().includes('reimburse') || c.content.toLowerCase().includes('attorney')
+    );
+
+    if (indemClauses.length > 0) {
+      const primary = indemClauses[0];
+      return {
+        isMissingInfo: false,
+        answer: `As stated in **${primary.sectionNumber}** (Page ${primary.pageNumber}): "${primary.content}". ${primary.implication} Ensure legal fee shifting is strictly reciprocal so the prevailing party recovers costs, rather than exposing the employee to one-sided corporate legal fees.`,
+        citations: indemClauses.map((c) => ({
+          clauseId: c.id,
+          pageNumber: c.pageNumber,
+          sectionNumber: c.sectionNumber,
+          clauseTitle: c.title,
+          quote: c.content,
+          relevanceExplanation: c.implication,
+          riskLevel: c.riskLevel,
+        })),
+        suggestedQuestions: [
+          'Is the attorney fee reimbursement clause reciprocal if the employee prevails in a dispute?',
+          'Does the company carry Errors & Omissions (E&O) insurance that shields employees from personal liability?',
+        ],
+      };
+    }
+  }
+
+  // 9. Unknowns / Missing clauses handler (e.g. Parental Leave, Remote work allowance, 401k match)
   const unknownTopics = ['parental leave', 'maternity', 'paternity', 'remote stipend', 'relocation allowance', '401k match', 'pension', 'health insurance dental', 'overtime'];
   for (const topic of unknownTopics) {
     if (normalizedQuery.includes(topic)) {
@@ -757,6 +813,124 @@ export function executeQuickAction(
         ],
         actionableNextSteps: [
           'Propose mutual arbitrator appointment and mutual fee recovery.',
+        ],
+      };
+    }
+
+    case 'confidentiality': {
+      const isDocB = doc.id.includes('v2') || doc.title.includes('Revised');
+      if (isDocB) {
+        return {
+          actionId,
+          title: 'Confidentiality & Trade Secret Protections',
+          status: 'found',
+          plainEnglishSummary:
+            'Balanced 5-year non-disclosure protection for general business information, with indefinite protection reserved strictly for genuine technical trade secrets.',
+          legalImplications:
+            'Fair market standard. Allows you to freely use general commercial knowledge in future roles after 5 years, while honoring proprietary code protections.',
+          riskRating: 'low',
+          citations: [
+            {
+              pageNumber: 4,
+              sectionNumber: 'Section 7.1',
+              clauseTitle: 'Five-Year Commercial Sunset & Trade Secrets Protection',
+              quote: 'Five (5) year term for business data, perpetual for technical trade secrets.',
+              relevanceExplanation: 'Applies a reasonable sunset on commercial data.',
+              riskLevel: 'low',
+            },
+          ],
+          suggestedLegalQuestions: [
+            'Are customer lists and pricing records subject to the 5-year expiration?',
+          ],
+          actionableNextSteps: [
+            'Confirm inventory of protected trade secrets prior to formal departure.',
+          ],
+        };
+      }
+      return {
+        actionId,
+        title: 'Perpetual Confidentiality & Trade Secrets',
+        status: 'found',
+        plainEnglishSummary:
+          'Broad indefinite non-disclosure requirement. You are prohibited from ever using or disclosing any company information perpetually after leaving, with no sunset period.',
+        legalImplications:
+          'Overbroad perpetual restrictions can create legal exposure when working in the same industry domain, as former employers may claim ordinary business skills are company secrets.',
+        riskRating: 'medium',
+        citations: [
+          {
+            pageNumber: 4,
+            sectionNumber: 'Section 7.1',
+            clauseTitle: 'Perpetual Confidentiality with Zero Sunset',
+            quote: 'hold in strictest confidence and never disclose, publish, or utilize any Confidential Information of the Company for a perpetual period following separation.',
+            relevanceExplanation: 'Enforces permanent restrictions on all company data without standard time limits.',
+            riskLevel: 'medium',
+          },
+        ],
+        suggestedLegalQuestions: [
+          'Can general commercial and operational information be limited to a standard 2-3 year term post-separation?',
+          'Does the definition exclude information that is publicly known or independently developed?',
+        ],
+        actionableNextSteps: [
+          'Request standard exclusion carve-outs for general industry knowledge and non-secret data.',
+        ],
+      };
+    }
+
+    case 'indemnification': {
+      const isDocB = doc.id.includes('v2') || doc.title.includes('Revised');
+      if (isDocB) {
+        return {
+          actionId,
+          title: 'Mutual Dispute Resolution & Reciprocal Legal Fees',
+          status: 'found',
+          plainEnglishSummary:
+            'Requires 30 days of good faith mediation before any arbitration. Arbitrator is appointed jointly by mutual consent, and the prevailing party receives reasonable attorney fees.',
+          legalImplications:
+            'Symmetrical legal protection. You cannot be ambushed with a company-picked arbitrator, and you recover your legal fees if you successfully defend your rights.',
+          riskRating: 'low',
+          citations: [
+            {
+              pageNumber: 4,
+              sectionNumber: 'Section 8.1 - 8.3',
+              clauseTitle: 'Pre-Dispute Mediation & Bilateral Attorney Fee Recovery',
+              quote: 'Parties agree to thirty (30) days of good faith commercial mediation... Arbitrator appointed jointly by mutual written consent... The prevailing party in any dispute shall be awarded reasonable attorney fees.',
+              relevanceExplanation: 'Guarantees mutual arbitrator selection and two-way cost reimbursement.',
+              riskLevel: 'low',
+            },
+          ],
+          suggestedLegalQuestions: [
+            'Which established mediation provider (e.g. AAA, JAMS) administers the initial mediation?',
+          ],
+          actionableNextSteps: [
+            'Retain documentation of all mutual communications should any dispute arise.',
+          ],
+        };
+      }
+      return {
+        actionId,
+        title: 'Asymmetric Legal Cost Shifting & Liability Exposure',
+        status: 'found',
+        plainEnglishSummary:
+          'Extreme one-sided cost shifting: if the company prevails in any enforcement action against you (including non-compete disputes), you must pay all company legal costs, filing fees, and outside attorney bills. There is NO reciprocal fee recovery for you if you win.',
+        legalImplications:
+          'Severe chilling effect on employee rights. The threat of paying expensive corporate legal bills discourages employees from defending against unconscionable contract terms.',
+        riskRating: 'high',
+        citations: [
+          {
+            pageNumber: 4,
+            sectionNumber: 'Section 8.3',
+            clauseTitle: 'One-Sided Company Legal Fee Reimbursement',
+            quote: 'In the event Company prevails in any enforcement proceeding, Employee shall reimburse all legal costs, court filing fees, and external attorney fees incurred by Company.',
+            relevanceExplanation: 'Imposes severe asymmetric financial liability on the employee.',
+            riskLevel: 'high',
+          },
+        ],
+        suggestedLegalQuestions: [
+          'Can Section 8.3 be made bilateral so that the prevailing party receives attorney fees regardless of who wins?',
+          'Will the company confirm that employees are covered under corporate Directors & Officers (D&O) or liability insurance?',
+        ],
+        actionableNextSteps: [
+          'Insist that any attorney fee shifting clause be strictly bilateral / reciprocal.',
         ],
       };
     }

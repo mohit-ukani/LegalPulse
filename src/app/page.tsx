@@ -10,6 +10,8 @@ import { AnalysisWorkspace } from '@/components/analysis/AnalysisWorkspace';
 import { ComparisonWorkspace } from '@/components/comparison/ComparisonWorkspace';
 import { UploadModal } from '@/components/modals/UploadModal';
 import { ApiKeyModal } from '@/components/modals/ApiKeyModal';
+import { ExportReportModal } from '@/components/modals/ExportReportModal';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export default function Home() {
   const [documents, setDocuments] = useState<LegalDocument[]>([SAMPLE_DOC_A, SAMPLE_DOC_B]);
@@ -18,7 +20,9 @@ export default function Home() {
   const [activeMode, setActiveMode] = useState<'workstation' | 'comparison'>('workstation');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
+  const [chatPromptTrigger, setChatPromptTrigger] = useState<{ text: string; timestamp: number } | null>(null);
 
   // Load API key from localStorage if saved
   useEffect(() => {
@@ -28,14 +32,26 @@ export default function Home() {
     }
   }, []);
 
+  const currentDoc = documents.find((d) => d.id === currentDocId) || documents[0];
+
+  // Dynamic document title update based on mode and active document
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (activeMode === 'comparison') {
+        document.title = 'Contract Diff & Risk Delta | LegalPulse';
+      } else {
+        const shortTitle = currentDoc?.title?.split('—')[0]?.trim() || 'Document';
+        document.title = `${shortTitle} | LegalPulse AI Workstation`;
+      }
+    }
+  }, [activeMode, currentDoc]);
+
   const handleSaveApiKey = (newKey: string) => {
     setApiKey(newKey);
     if (typeof window !== 'undefined') {
       localStorage.setItem('legalpulse_gemini_key', newKey);
     }
   };
-
-  const currentDoc = documents.find((d) => d.id === currentDocId) || documents[0];
 
   const handleDocumentLoaded = (newDoc: LegalDocument) => {
     setDocuments((prev) => {
@@ -52,84 +68,101 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
-      {/* Top Navbar */}
-      <Navbar
-        currentDoc={currentDoc}
-        onSelectDoc={(id) => {
-          setCurrentDocId(id);
-          setActiveCitation(null);
-        }}
-        availableDocs={documents}
-        activeMode={activeMode}
-        onSelectMode={setActiveMode}
-        onOpenUpload={() => setUploadModalOpen(true)}
-        onOpenSettings={() => setApiKeyModalOpen(true)}
-        apiKeySet={Boolean(apiKey)}
-      />
+    <ErrorBoundary>
+      <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
+        {/* Top Navbar */}
+        <Navbar
+          currentDoc={currentDoc}
+          onSelectDoc={(id) => {
+            setCurrentDocId(id);
+            setActiveCitation(null);
+          }}
+          availableDocs={documents}
+          activeMode={activeMode}
+          onSelectMode={setActiveMode}
+          onOpenUpload={() => setUploadModalOpen(true)}
+          onOpenSettings={() => setApiKeyModalOpen(true)}
+          onOpenExport={() => setExportModalOpen(true)}
+          apiKeySet={Boolean(apiKey)}
+        />
 
-      {/* Legal Assistance Disclaimer Banner */}
-      <LegalDisclaimerBanner />
+        {/* Legal Assistance Disclaimer Banner */}
+        <LegalDisclaimerBanner />
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden">
-        {activeMode === 'comparison' ? (
-          /* Mode 2: Contract-vs-Contract Comparison View */
-          <ComparisonWorkspace
-            onBackToWorkstation={() => setActiveMode('workstation')}
-            onSelectDoc={(id) => {
-              setCurrentDocId(id);
-              setActiveMode('workstation');
-            }}
-          />
-        ) : (
-          /* Mode 1: Split-Screen Legal Workstation */
-          <div className="grid grid-cols-1 lg:grid-cols-2 h-full overflow-hidden">
-            {/* Left Panel: Interactive PDF Viewer & Citation Highlighter */}
-            <section
-              aria-label="PDF Document Viewer"
-              className="h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-border"
-            >
-              <InteractivePdfViewer
-                document={currentDoc}
-                activeCitation={activeCitation}
-                onAskAboutText={(selectedText) => {
-                  // Switch to grounded chat and ask about selected text
-                  console.log('Selected text from document:', selectedText);
-                }}
-              />
-            </section>
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-hidden">
+          {activeMode === 'comparison' ? (
+            /* Mode 2: Contract-vs-Contract Comparison View */
+            <ComparisonWorkspace
+              onBackToWorkstation={() => setActiveMode('workstation')}
+              onSelectDoc={(id) => {
+                setCurrentDocId(id);
+                setActiveMode('workstation');
+              }}
+              apiKey={apiKey}
+            />
+          ) : (
+            /* Mode 1: Split-Screen Legal Workstation */
+            <div className="grid grid-cols-1 lg:grid-cols-2 h-full overflow-hidden">
+              {/* Left Panel: Interactive PDF Viewer & Citation Highlighter */}
+              <section
+                aria-label="PDF Document Viewer"
+                className="h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-border"
+              >
+                <InteractivePdfViewer
+                  document={currentDoc}
+                  activeCitation={activeCitation}
+                  onAskAboutText={(selectedText) => {
+                    // Switch to grounded chat and ask about selected passage
+                    setChatPromptTrigger({
+                      text: `Explain this passage and evaluate legal risks or obligations: "${selectedText}"`,
+                      timestamp: Date.now(),
+                    });
+                  }}
+                />
+              </section>
 
-            {/* Right Panel: Executive Analysis Workspace */}
-            <section
-              aria-label="Legal Analysis Workspace"
-              className="h-full overflow-hidden bg-card"
-            >
-              <AnalysisWorkspace
-                document={currentDoc}
-                onCitationClick={handleCitationClick}
-                activeCitation={activeCitation}
-                onSwitchToComparison={() => setActiveMode('comparison')}
-              />
-            </section>
-          </div>
-        )}
-      </main>
+              {/* Right Panel: Executive Analysis Workspace */}
+              <section
+                aria-label="Legal Analysis Workspace"
+                className="h-full overflow-hidden bg-card"
+              >
+                <AnalysisWorkspace
+                  document={currentDoc}
+                  onCitationClick={handleCitationClick}
+                  activeCitation={activeCitation}
+                  onSwitchToComparison={() => setActiveMode('comparison')}
+                  apiKey={apiKey}
+                  externalPrompt={chatPromptTrigger}
+                  onOpenExport={() => setExportModalOpen(true)}
+                />
+              </section>
+            </div>
+          )}
+        </main>
 
-      {/* Upload Modal */}
-      <UploadModal
-        isOpen={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
-        onDocumentLoaded={handleDocumentLoaded}
-      />
+        {/* Upload Modal */}
+        <UploadModal
+          isOpen={uploadModalOpen}
+          onClose={() => setUploadModalOpen(false)}
+          onDocumentLoaded={handleDocumentLoaded}
+        />
 
-      {/* Gemini Settings Modal */}
-      <ApiKeyModal
-        isOpen={apiKeyModalOpen}
-        onClose={() => setApiKeyModalOpen(false)}
-        apiKey={apiKey}
-        onSaveApiKey={handleSaveApiKey}
-      />
-    </div>
+        {/* Gemini Settings Modal */}
+        <ApiKeyModal
+          isOpen={apiKeyModalOpen}
+          onClose={() => setApiKeyModalOpen(false)}
+          apiKey={apiKey}
+          onSaveApiKey={handleSaveApiKey}
+        />
+
+        {/* Executive Legal Audit Export Modal */}
+        <ExportReportModal
+          isOpen={exportModalOpen}
+          onClose={() => setExportModalOpen(false)}
+          document={currentDoc}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }

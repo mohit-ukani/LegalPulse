@@ -78,6 +78,65 @@ export function InteractivePdfViewer({
     }
   };
 
+  const matchingPages = React.useMemo(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) return [];
+    const q = searchQuery.trim().toLowerCase();
+    const result: { pageNumber: number; count: number }[] = [];
+    document.pages.forEach((page) => {
+      const lower = page.text.toLowerCase();
+      let count = 0;
+      let pos = 0;
+      while ((pos = lower.indexOf(q, pos)) !== -1) {
+        count++;
+        pos += q.length;
+      }
+      if (count > 0) {
+        result.push({ pageNumber: page.pageNumber, count });
+      }
+    });
+    return result;
+  }, [document.pages, searchQuery]);
+
+  const totalMatches = matchingPages.reduce((acc, curr) => acc + curr.count, 0);
+
+  // Jump to first matching page on query change
+  useEffect(() => {
+    if (matchingPages.length > 0 && searchQuery.trim().length >= 2) {
+      const firstPage = matchingPages[0].pageNumber;
+      setCurrentPage(firstPage);
+      setTimeout(() => {
+        const pageEl = pageRefs.current[firstPage];
+        if (pageEl) {
+          pageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+    }
+  }, [searchQuery, matchingPages]);
+
+  const handleNextMatch = () => {
+    if (matchingPages.length === 0) return;
+    const currentIndex = matchingPages.findIndex((m) => m.pageNumber === currentPage);
+    const nextIndex = (currentIndex + 1) % matchingPages.length;
+    const nextPage = matchingPages[nextIndex].pageNumber;
+    setCurrentPage(nextPage);
+    const pageEl = pageRefs.current[nextPage];
+    if (pageEl) {
+      pageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handlePrevMatch = () => {
+    if (matchingPages.length === 0) return;
+    const currentIndex = matchingPages.findIndex((m) => m.pageNumber === currentPage);
+    const prevIndex = (currentIndex - 1 + matchingPages.length) % matchingPages.length;
+    const prevPage = matchingPages[prevIndex].pageNumber;
+    setCurrentPage(prevPage);
+    const pageEl = pageRefs.current[prevPage];
+    if (pageEl) {
+      pageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   const activePageData = document.pages.find((p) => p.pageNumber === currentPage) || document.pages[0];
 
   return (
@@ -114,16 +173,41 @@ export function InteractivePdfViewer({
         </div>
 
         {/* Middle: Document Title & Search */}
-        <div className="hidden sm:flex items-center gap-2 flex-1 max-w-xs mx-2">
-          <div className="relative w-full">
-            <MagnifyingGlass size={13} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+        <div className="hidden sm:flex items-center gap-2 flex-1 max-w-sm mx-2">
+          <div className="relative w-full flex items-center">
+            <MagnifyingGlass size={13} className="absolute left-2.5 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               placeholder="Search in document..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-7.5 pl-8 pr-3 text-xs rounded-md bg-secondary/80 border border-border focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+              className="w-full h-7.5 pl-8 pr-20 text-xs rounded-md bg-secondary/80 border border-border focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
             />
+            {searchQuery.trim().length >= 2 && (
+              <div className="absolute right-1.5 flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+                <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                  {totalMatches} {totalMatches === 1 ? 'match' : 'matches'}
+                </span>
+                {matchingPages.length > 1 && (
+                  <div className="flex items-center">
+                    <button
+                      onClick={handlePrevMatch}
+                      className="p-0.5 hover:text-foreground cursor-pointer"
+                      title="Previous match page"
+                    >
+                      <CaretLeft size={12} />
+                    </button>
+                    <button
+                      onClick={handleNextMatch}
+                      className="p-0.5 hover:text-foreground cursor-pointer"
+                      title="Next match page"
+                    >
+                      <CaretRight size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

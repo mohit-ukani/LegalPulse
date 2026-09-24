@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Translate, Sparkle, Copy, Check, Info } from '@phosphor-icons/react';
+import { Translate, Sparkle, Copy, Check, Info, WarningCircle, ArrowClockwise } from '@phosphor-icons/react';
 import { LegalDocument } from '@/lib/types';
 
 interface MultilingualExplainerProps {
   document: LegalDocument;
+  apiKey?: string;
 }
 
 const SUPPORTED_LANGUAGES = [
@@ -16,40 +17,92 @@ const SUPPORTED_LANGUAGES = [
   { id: 'Plain English', label: 'Plain English (Zero Jargon)', flag: '🇬🇧' },
 ];
 
-export function MultilingualExplainer({ document }: MultilingualExplainerProps) {
+export function MultilingualExplainer({ document, apiKey }: MultilingualExplainerProps) {
+  const isDocB = document.id.includes('v2') || document.title.includes('Revised');
+
+  // Derive preset clauses dynamically from the active document
+  const presetClauses = React.useMemo(() => {
+    if (isDocB) {
+      return [
+        {
+          title: 'Section 3.2: Explicit Waiver of Service Bonds',
+          text: 'There shall be no mandatory service lock-in, bond, or liquidated damages clawback of any kind. All ordinary onboarding, technology enablement, and internal skills training shall be treated as ordinary business operational expenses.',
+        },
+        {
+          title: 'Section 5.1: 30-Day Reciprocal Notice with Buyout',
+          text: 'Either party may terminate employment by giving thirty (30) calendar days prior written notice. Employee may elect to terminate immediately by paying basic salary in lieu of notice.',
+        },
+        {
+          title: 'Section 6.1: 6-Month Paid Garden Leave Non-Compete',
+          text: 'Restricted for a reasonable period of six (6) months limited to five named direct competitors. During said period, Company shall pay Employee one hundred percent (100%) of monthly Base Salary as continuing non-compete compensation.',
+        },
+        {
+          title: 'Section 4.2: Protection of Personal Off-Hours Inventions',
+          text: 'Company explicitly waives claim over any intellectual property developed by Employee entirely on Employee own time without using Company equipment or confidential trade secrets.',
+        },
+      ];
+    }
+
+    if (document.id.includes('v1') || document.id.includes('Standard') || document.title.includes('Original')) {
+      return [
+        {
+          title: 'Section 3: Service Bond & $50,000 Clawback',
+          text: 'In consideration of onboarding training, the Employee agrees to remain in service for twenty-four (24) consecutive months. If the Employee resigns prior to 24 months, Employee shall immediately pay the sum of $50,000 / INR 6,00,000 as liquidated damages within 7 days, and authorizes Company to deduct all earned salary toward satisfaction thereof.',
+        },
+        {
+          title: 'Section 5.1: 90-Day Asymmetric Notice with No Buyout',
+          text: 'The Employee may terminate this Agreement only by providing ninety (90) calendar days prior written notice to Company Management. The Employee shall not have any unilateral right to pay salary in lieu of serving the full ninety (90) day notice period.',
+        },
+        {
+          title: 'Section 6.1: 24-Month Worldwide Non-Compete',
+          text: 'For a period of twenty-four (24) consecutive months following termination for any reason, Employee shall not directly or indirectly join or consult with any business worldwide developing cloud infrastructure or developer tools, with zero post-termination garden leave pay.',
+        },
+        {
+          title: 'Section 4.2: Personal Off-Hours Inventions Claim',
+          text: 'This assignment applies comprehensively to all creations made during the term of employment, whether or not conceived during regular business hours, whether or not using Company computers or hardware, and whether or not directly related to Company products.',
+        },
+      ];
+    }
+
+    // Dynamic preset clauses for uploaded custom documents
+    const docClauses = document.pages.flatMap((p) => p.clauses || []);
+    if (docClauses.length > 0) {
+      return docClauses.slice(0, 4).map((c) => ({
+        title: `${c.sectionNumber}: ${c.title}`,
+        text: c.content,
+      }));
+    }
+
+    return [
+      {
+        title: 'Document Section 1',
+        text: document.pages[0]?.text.slice(0, 300) || 'Legal clause text...',
+      },
+    ];
+  }, [document, isDocB]);
+
   const [selectedLanguage, setSelectedLanguage] = useState('Hindi');
-  const [clauseTitle, setClauseTitle] = useState('Section 3: Service Bond & Clawback');
-  const [clauseText, setClauseText] = useState(
-    'In consideration of onboarding training, the Employee agrees to remain in service for twenty-four (24) consecutive months. If the Employee resigns prior to 24 months, Employee shall immediately pay the sum of $50,000 / INR 6,00,000 as liquidated damages within 7 days, and authorizes Company to deduct all earned salary toward satisfaction thereof.'
-  );
+  const [clauseTitle, setClauseTitle] = useState(presetClauses[0]?.title || 'Legal Clause');
+  const [clauseText, setClauseText] = useState(presetClauses[0]?.text || '');
   const [loading, setLoading] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [translationError, setTranslationError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Quick preset clauses from the document
-  const presetClauses = [
-    {
-      title: 'Section 3: Service Bond & Clawback',
-      text: 'In consideration of onboarding training, the Employee agrees to remain in service for twenty-four (24) consecutive months. If the Employee resigns prior to 24 months, Employee shall immediately pay the sum of $50,000 / INR 6,00,000 as liquidated damages within 7 days, and authorizes Company to deduct all earned salary toward satisfaction thereof.',
-    },
-    {
-      title: 'Section 5.1: 90-Day Asymmetric Notice',
-      text: 'The Employee may terminate this Agreement only by providing ninety (90) calendar days prior written notice to Company Management. The Employee shall not have any unilateral right to pay salary in lieu of serving the full ninety (90) day notice period.',
-    },
-    {
-      title: 'Section 6.1: 24-Month Worldwide Non-Compete',
-      text: 'For a period of twenty-four (24) consecutive months following termination for any reason, Employee shall not directly or indirectly join or consult with any business worldwide developing cloud infrastructure or developer tools, with zero post-termination garden leave pay.',
-    },
-    {
-      title: 'Section 4.2: Personal Off-Hours Inventions Claim',
-      text: 'This assignment applies comprehensively to all creations made during the term of employment, whether or not conceived during regular business hours, whether or not using Company computers or hardware, and whether or not directly related to Company products.',
-    },
-  ];
+  // Update clause text and reset explanation when document switches
+  React.useEffect(() => {
+    if (presetClauses.length > 0) {
+      setClauseTitle(presetClauses[0].title);
+      setClauseText(presetClauses[0].text);
+      setExplanation(null);
+    }
+  }, [document.id, presetClauses]);
 
   const handleTranslate = async (targetLang?: string, textToTranslate?: string) => {
     const lang = targetLang || selectedLanguage;
     const txt = textToTranslate || clauseText;
     setLoading(true);
+    setTranslationError(null);
 
     try {
       const response = await fetch('/api/multilingual', {
@@ -59,15 +112,20 @@ export function MultilingualExplainer({ document }: MultilingualExplainerProps) 
           text: txt,
           targetLanguage: lang,
           clauseTitle,
+          apiKey: apiKey && apiKey.trim() ? apiKey.trim() : undefined,
         }),
       });
 
       const data = await response.json();
       if (data.success) {
         setExplanation(data.explanation);
+        setTranslationError(null);
+      } else {
+        setTranslationError(data.error || 'Translation failed. The fallback engine will be used on retry.');
       }
-    } catch (err) {
-      console.error('Translation error:', err);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Network error';
+      setTranslationError(`Translation request failed: ${errMsg}`);
     } finally {
       setLoading(false);
     }
@@ -168,6 +226,23 @@ export function MultilingualExplainer({ document }: MultilingualExplainerProps) 
           </button>
         </div>
       </div>
+
+      {/* Error State */}
+      {translationError && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-700 dark:text-red-300 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <WarningCircle size={15} weight="fill" className="shrink-0" />
+            <span>{translationError}</span>
+          </div>
+          <button
+            onClick={() => handleTranslate()}
+            className="shrink-0 px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-800 dark:text-red-200 font-medium flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <ArrowClockwise size={12} />
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Result Display Box */}
       {explanation && (

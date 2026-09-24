@@ -18,14 +18,48 @@ import { SAMPLE_COMPARISON, SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data
 interface ComparisonWorkspaceProps {
   onBackToWorkstation: () => void;
   onSelectDoc: (docId: string) => void;
+  apiKey?: string;
 }
 
 export function ComparisonWorkspace({
   onBackToWorkstation,
   onSelectDoc,
+  apiKey,
 }: ComparisonWorkspaceProps) {
-  const comparison: ContractComparisonResult = SAMPLE_COMPARISON;
+  const [comparison, setComparison] = useState<ContractComparisonResult>(SAMPLE_COMPARISON);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [loadingComparison, setLoadingComparison] = useState(false);
+
+  // Call /api/compare endpoint to verify bilateral comparison
+  React.useEffect(() => {
+    let isMounted = true;
+    async function fetchComparison() {
+      try {
+        setLoadingComparison(true);
+        const res = await fetch('/api/compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            docAId: SAMPLE_DOC_A.id,
+            docBId: SAMPLE_DOC_B.id,
+            apiKey: apiKey && apiKey.trim() ? apiKey.trim() : undefined,
+          }),
+        });
+        const data = await res.json();
+        if (isMounted && data.success && data.comparison) {
+          setComparison(data.comparison);
+        }
+      } catch (err) {
+        console.warn('Using baseline comparison matrix:', err);
+      } finally {
+        if (isMounted) setLoadingComparison(false);
+      }
+    }
+    fetchComparison();
+    return () => {
+      isMounted = false;
+    };
+  }, [apiKey]);
 
   const categories = ['all', ...new Set(comparison.differences.map((d) => d.category))];
 
@@ -65,6 +99,22 @@ export function ComparisonWorkspace({
       </div>
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 w-full">
+        {/* Loading State */}
+        {loadingComparison && (
+          <div className="p-6 rounded-xl border border-border bg-card flex flex-col items-center justify-center space-y-3 text-center">
+            <Sparkle size={24} className="animate-spin text-emerald-600" />
+            <div className="text-xs font-medium text-foreground">Analyzing bilateral contract provisions...</div>
+            <div className="text-[10px] text-muted-foreground max-w-sm">
+              Comparing clause-by-clause differences, risk shifts, and strategic implications across both agreements.
+            </div>
+            <div className="w-full max-w-xs space-y-2 mt-2">
+              <div className="h-2 bg-secondary rounded-full animate-pulse" />
+              <div className="h-2 bg-secondary rounded-full animate-pulse w-4/5" />
+              <div className="h-2 bg-secondary rounded-full animate-pulse w-3/5" />
+            </div>
+          </div>
+        )}
+
         {/* Strategic Takeaways Box */}
         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-2">
           <div className="font-bold text-xs uppercase tracking-wider text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">

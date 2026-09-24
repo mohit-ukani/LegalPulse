@@ -12,6 +12,7 @@ import {
   Sparkle,
   CaretDown,
   FileText,
+  DownloadSimple,
 } from '@phosphor-icons/react';
 import { LegalDocument } from '@/lib/types';
 
@@ -23,6 +24,7 @@ interface NavbarProps {
   onSelectMode: (mode: 'workstation' | 'comparison') => void;
   onOpenUpload: () => void;
   onOpenSettings: () => void;
+  onOpenExport?: () => void;
   apiKeySet: boolean;
 }
 
@@ -34,23 +36,40 @@ export function Navbar({
   onSelectMode,
   onOpenUpload,
   onOpenSettings,
+  onOpenExport,
   apiKeySet,
 }: NavbarProps) {
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Check initial dark mode from document
+    // Check initial dark mode from localStorage or system preference
     if (typeof window !== 'undefined') {
-      const isDarkMode = document.documentElement.classList.contains('dark');
-      setIsDark(isDarkMode);
+      const savedTheme = localStorage.getItem('legalpulse_theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+
+      if (shouldBeDark) {
+        document.documentElement.classList.add('dark');
+        setIsDark(true);
+      } else {
+        document.documentElement.classList.remove('dark');
+        setIsDark(false);
+      }
     }
   }, []);
 
   const toggleTheme = () => {
     if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark');
-      setIsDark(!isDark);
+      const nextDark = !isDark;
+      if (nextDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('legalpulse_theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('legalpulse_theme', 'light');
+      }
+      setIsDark(nextDark);
     }
   };
 
@@ -78,6 +97,8 @@ export function Navbar({
           <div className="relative flex-1">
             <button
               onClick={() => setDocDropdownOpen(!docDropdownOpen)}
+              aria-haspopup="listbox"
+              aria-expanded={docDropdownOpen}
               className="w-full h-8.5 px-3 rounded-md bg-secondary hover:bg-muted text-foreground border border-border flex items-center justify-between text-xs font-medium transition-colors cursor-pointer"
               title={currentDoc.title}
             >
@@ -94,7 +115,7 @@ export function Navbar({
                   className="fixed inset-0 z-40"
                   onClick={() => setDocDropdownOpen(false)}
                 />
-                <div className="absolute left-0 right-0 top-10 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg py-1.5 text-xs">
+                <div className="absolute left-0 right-0 top-10 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg py-1.5 text-xs" role="listbox" aria-label="Available documents">
                   <div className="px-3 py-1 text-[10px] font-semibold uppercase text-muted-foreground tracking-wider">
                     Select Document
                   </div>
@@ -167,6 +188,17 @@ export function Navbar({
 
         {/* Right side controls */}
         <div className="flex items-center gap-2 shrink-0">
+          {onOpenExport && (
+            <button
+              onClick={onOpenExport}
+              className="h-8.5 px-3 rounded-md border border-border bg-secondary hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              title="Export Executive Legal Audit Brief"
+            >
+              <DownloadSimple size={14} />
+              <span className="hidden sm:inline">Export Brief</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenUpload}
             className="h-8.5 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"

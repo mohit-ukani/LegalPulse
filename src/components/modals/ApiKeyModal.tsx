@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Sparkle, CheckCircle, ShieldCheck, Key, ArrowSquareOut } from '@phosphor-icons/react';
 
 interface ApiKeyModalProps {
@@ -19,6 +19,18 @@ export function ApiKeyModal({
   const [inputKey, setInputKey] = useState(apiKey);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  // Close on Escape key
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
+
   if (!isOpen) return null;
 
   const handleSave = () => {
@@ -31,7 +43,7 @@ export function ApiKeyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in" role="dialog" aria-modal="true" aria-labelledby="apikey-modal-title">
       <div className="relative w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-6 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">
@@ -40,7 +52,7 @@ export function ApiKeyModal({
               <Sparkle size={18} weight="bold" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-foreground">
+              <h3 id="apikey-modal-title" className="font-bold text-sm text-foreground">
                 Google Gemini 1.5 Flash Configuration
               </h3>
               <p className="text-xs text-muted-foreground">
@@ -63,10 +75,10 @@ export function ApiKeyModal({
             High-Speed RAG & Structured Schema Engine
           </div>
           <p className="text-muted-foreground leading-relaxed text-[11px]">
-            LegalPulse utilizes <strong>Gemini 1.5 Flash</strong> with temperature 0.1 and strict system constraints to extract visual page citations and prevent hallucinations.
+            LegalPulse utilizes <strong>Gemini 2.5 Flash</strong> with temperature 0.1 and strict system constraints to extract visual page citations and prevent hallucinations.
           </p>
           <div className="text-[10px] text-emerald-700 dark:text-emerald-300 font-mono">
-            Model: gemini-1.5-flash · Grounded Schema Active
+            Model: gemini-2.5-flash · Grounded Schema Active
           </div>
         </div>
 

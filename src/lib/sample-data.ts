@@ -44,6 +44,13 @@ export const QUICK_ACTIONS: QuickActionItem[] = [
     defaultPrompt: 'What are the intellectual property assignment terms, and does it claim personal projects developed on off-hours?',
   },
   {
+    id: 'confidentiality',
+    label: 'Confidentiality & Trade Secrets',
+    iconName: 'Lock',
+    description: 'Non-disclosure obligations, trade secret scope, and post-exit duration',
+    defaultPrompt: 'What are the confidentiality and non-disclosure obligations, and how long do they survive termination?',
+  },
+  {
     id: 'governing_law',
     label: 'Governing Law & Jurisdiction',
     iconName: 'Scales',

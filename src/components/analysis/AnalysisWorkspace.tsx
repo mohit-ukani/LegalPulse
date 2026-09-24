@@ -11,6 +11,8 @@ import {
   ArrowRight,
   Scales,
   CheckCircle,
+  Copy,
+  Check,
 } from '@phosphor-icons/react';
 import { Citation, LegalDocument, QuickActionId, QuickActionResult } from '@/lib/types';
 import { QuickActionChips } from './QuickActionChips';
@@ -24,6 +26,9 @@ interface AnalysisWorkspaceProps {
   onCitationClick: (citation: Citation) => void;
   activeCitation?: Citation | null;
   onSwitchToComparison: () => void;
+  apiKey?: string;
+  externalPrompt?: { text: string; timestamp: number } | null;
+  onOpenExport?: () => void;
 }
 
 export function AnalysisWorkspace({
@@ -31,19 +36,26 @@ export function AnalysisWorkspace({
   onCitationClick,
   activeCitation,
   onSwitchToComparison,
+  apiKey,
+  externalPrompt,
+  onOpenExport,
 }: AnalysisWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<'quick_actions' | 'chat' | 'risk' | 'multilingual'>('quick_actions');
   const [activeActionId, setActiveActionId] = useState<QuickActionId | null>('notice_period');
   const [actionResult, setActionResult] = useState<QuickActionResult | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [chatPromptToInject, setChatPromptToInject] = useState<string | null>(null);
+  const [chatPromptToInject, setChatPromptToInject] = useState<{ text: string; timestamp: number } | null>(null);
+  const [copiedActionPlan, setCopiedActionPlan] = useState(false);
 
-  // Auto-run initial quick action on load
+  // When external prompt is received from PDF passage selection, switch to chat and submit
   React.useEffect(() => {
-    handleSelectQuickAction('notice_period');
-  }, [document.id]);
+    if (externalPrompt) {
+      setChatPromptToInject(externalPrompt);
+      setActiveTab('chat');
+    }
+  }, [externalPrompt]);
 
-  const handleSelectQuickAction = async (actionId: QuickActionId) => {
+  const handleSelectQuickAction = React.useCallback(async (actionId: QuickActionId) => {
     setActiveActionId(actionId);
     setActionLoading(true);
 
@@ -55,6 +67,7 @@ export function AnalysisWorkspace({
           actionId,
           documentId: document.id,
           customDoc: document.id.startsWith('custom-doc-') ? document : undefined,
+          apiKey: apiKey && apiKey.trim() ? apiKey.trim() : undefined,
         }),
       });
 
@@ -71,20 +84,43 @@ export function AnalysisWorkspace({
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [document, onCitationClick, apiKey]);
+
+  // Auto-run initial quick action on doc load
+  React.useEffect(() => {
+    handleSelectQuickAction('notice_period');
+  }, [document.id, handleSelectQuickAction]);
 
   const handleAskInChat = (questionText: string) => {
-    setChatPromptToInject(questionText);
+    setChatPromptToInject({ text: questionText, timestamp: Date.now() });
     setActiveTab('chat');
+  };
+
+  const handleCopyActionPlan = async () => {
+    if (!actionResult) return;
+    const plan = `LEGAL STRATEGY & COUNTER-STEPS: ${actionResult.title}\n\n` +
+      `Summary: ${actionResult.plainEnglishSummary}\n\n` +
+      `Legal Implication: ${actionResult.legalImplications}\n\n` +
+      `Action Steps:\n` + actionResult.actionableNextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n');
+    try {
+      await navigator.clipboard.writeText(plan);
+      setCopiedActionPlan(true);
+      setTimeout(() => setCopiedActionPlan(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy action plan:', err);
+    }
   };
 
   return (
     <div className="flex flex-col h-full bg-card overflow-hidden">
       {/* Workspace Tabs Header */}
       <div className="h-12 border-b border-border px-3 bg-secondary/50 flex items-center justify-between gap-1 shrink-0">
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1" role="tablist" aria-label="Analysis tools">
           <button
             onClick={() => setActiveTab('quick_actions')}
+            role="tab"
+            aria-selected={activeTab === 'quick_actions'}
+            aria-controls="panel-quick-actions"
             className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'quick_actions'
                 ? 'bg-card text-foreground shadow-xs font-semibold'
@@ -97,6 +133,9 @@ export function AnalysisWorkspace({
 
           <button
             onClick={() => setActiveTab('chat')}
+            role="tab"
+            aria-selected={activeTab === 'chat'}
+            aria-controls="panel-chat"
             className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'chat'
                 ? 'bg-card text-foreground shadow-xs font-semibold'
@@ -109,6 +148,9 @@ export function AnalysisWorkspace({
 
           <button
             onClick={() => setActiveTab('risk')}
+            role="tab"
+            aria-selected={activeTab === 'risk'}
+            aria-controls="panel-risk"
             className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'risk'
                 ? 'bg-card text-foreground shadow-xs font-semibold'
@@ -121,6 +163,9 @@ export function AnalysisWorkspace({
 
           <button
             onClick={() => setActiveTab('multilingual')}
+            role="tab"
+            aria-selected={activeTab === 'multilingual'}
+            aria-controls="panel-multilingual"
             className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'multilingual'
                 ? 'bg-card text-foreground shadow-xs font-semibold'
@@ -146,7 +191,7 @@ export function AnalysisWorkspace({
       <div className="flex-1 overflow-hidden">
         {/* Tab 1: Quick Actions Panel */}
         {activeTab === 'quick_actions' && (
-          <div className="p-4 sm:p-5 h-full overflow-y-auto space-y-5">
+          <div id="panel-quick-actions" role="tabpanel" className="p-4 sm:p-5 h-full overflow-y-auto space-y-5">
             {/* Quick Actions Grid */}
             <QuickActionChips
               onSelectAction={handleSelectQuickAction}
@@ -262,9 +307,27 @@ export function AnalysisWorkspace({
 
                 {/* Actionable Next Steps */}
                 {actionResult.actionableNextSteps.length > 0 && (
-                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-950 dark:text-emerald-200 space-y-1">
-                    <div className="font-semibold text-[11px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                      Actionable Next Steps:
+                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-950 dark:text-emerald-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-[11px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                        Actionable Next Steps & Strategy:
+                      </div>
+                      <button
+                        onClick={handleCopyActionPlan}
+                        className="text-[10px] font-medium text-emerald-800 dark:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedActionPlan ? (
+                          <>
+                            <Check size={11} className="text-emerald-600" weight="bold" />
+                            <span>Copied Strategy!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={11} />
+                            <span>Copy Action Plan</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                     <ul className="list-disc pl-4 space-y-0.5">
                       {actionResult.actionableNextSteps.map((step, sidx) => (
@@ -287,6 +350,7 @@ export function AnalysisWorkspace({
             onCitationClick={onCitationClick}
             activeCitation={activeCitation}
             externalPrompt={chatPromptToInject}
+            apiKey={apiKey}
           />
         )}
 
@@ -295,12 +359,13 @@ export function AnalysisWorkspace({
           <RiskDashboard
             document={document}
             onCitationClick={onCitationClick}
+            onOpenExport={onOpenExport}
           />
         )}
 
         {/* Tab 4: Multilingual Accessibility Panel */}
         {activeTab === 'multilingual' && (
-          <MultilingualExplainer document={document} />
+          <MultilingualExplainer document={document} apiKey={apiKey} />
         )}
       </div>
     </div>

@@ -19,7 +19,8 @@ interface GroundedChatProps {
   document: LegalDocument;
   onCitationClick: (citation: Citation) => void;
   activeCitation?: Citation | null;
-  externalPrompt?: string | null;
+  externalPrompt?: { text: string; timestamp: number } | string | null;
+  apiKey?: string;
 }
 
 const STARTER_PROMPTS = [
@@ -35,26 +36,34 @@ export function GroundedChat({
   onCitationClick,
   activeCitation,
   externalPrompt,
+  apiKey,
 }: GroundedChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: `Welcome to **LegalPulse Grounded Analysis** for **${document.title}**. Ask any question regarding your obligations, risks, notice periods, or compensation. Every answer will be grounded with clickable page and clause citations directly linked to the PDF on your left.`,
-      timestamp: Date.now(),
-      suggestedQuestions: [
-        'What are the highest risk clauses in this document?',
-        'What is the notice period and is there a buyout right?',
-        'Does the agreement impose an uncompensated non-compete?',
-      ],
-    },
-  ]);
+  const makeWelcomeMessage = (docTitle: string): ChatMessage => ({
+    id: 'welcome',
+    role: 'assistant',
+    content: `Welcome to **LegalPulse Grounded Analysis** for **${docTitle}**. Ask any question regarding your obligations, risks, notice periods, or compensation. Every answer will be grounded with clickable page and clause citations directly linked to the PDF on your left.`,
+    timestamp: Date.now(),
+    suggestedQuestions: [
+      'What are the highest risk clauses in this document?',
+      'What is the notice period and is there a buyout right?',
+      'Does the agreement impose an uncompensated non-compete?',
+    ],
+  });
+
+  const [messages, setMessages] = useState<ChatMessage[]>([makeWelcomeMessage(document.title)]);
 
   const [inputQuery, setInputQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastPromptTimestampRef = useRef<number | null>(null);
+
+  // Reset messages when document changes
+  useEffect(() => {
+    setMessages([makeWelcomeMessage(document.title)]);
+    lastPromptTimestampRef.current = null;
+  }, [document.id]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -63,8 +72,12 @@ export function GroundedChat({
 
   // Handle external prompt injection (e.g. from PDF text selection or quick chips)
   useEffect(() => {
-    if (externalPrompt) {
+    if (!externalPrompt) return;
+    if (typeof externalPrompt === 'string') {
       handleSend(externalPrompt);
+    } else if (externalPrompt.timestamp !== lastPromptTimestampRef.current) {
+      lastPromptTimestampRef.current = externalPrompt.timestamp;
+      handleSend(externalPrompt.text);
     }
   }, [externalPrompt]);
 
@@ -91,6 +104,7 @@ export function GroundedChat({
           query: query.trim(),
           documentId: document.id,
           customDoc: document.id.startsWith('custom-doc-') ? document : undefined,
+          apiKey: apiKey && apiKey.trim() ? apiKey.trim() : undefined,
         }),
       });
 
