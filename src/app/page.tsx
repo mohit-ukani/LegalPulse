@@ -13,6 +13,7 @@ import { UploadModal } from '@/components/modals/UploadModal';
 import { ApiKeyModal } from '@/components/modals/ApiKeyModal';
 import { ExportReportModal } from '@/components/modals/ExportReportModal';
 import { DeleteDocumentModal } from '@/components/modals/DeleteDocumentModal';
+import { DocumentSidebar } from '@/components/layout/DocumentSidebar';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export default function Home() {
@@ -20,6 +21,7 @@ export default function Home() {
   const [currentDocId, setCurrentDocId] = useState<string>(SAMPLE_DOC_A.id);
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
   const [activeMode, setActiveMode] = useState<'workstation' | 'comparison'>('workstation');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -28,11 +30,18 @@ export default function Home() {
   const [apiKey, setApiKey] = useState<string>('');
   const [chatPromptTrigger, setChatPromptTrigger] = useState<{ text: string; timestamp: number } | null>(null);
 
-  // Load API key and custom uploaded documents from localStorage
+  // Load API key, custom uploaded documents, and sidebar preference from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedKey = localStorage.getItem('legalpulse_gemini_key') || '';
       setApiKey(savedKey);
+
+      const savedSidebar = localStorage.getItem('legalpulse_sidebar_open');
+      if (savedSidebar !== null) {
+        setSidebarOpen(savedSidebar === 'true');
+      } else {
+        setSidebarOpen(window.innerWidth >= 1200);
+      }
 
       try {
         const savedCustomDocs = localStorage.getItem('legalpulse_custom_docs');
@@ -124,6 +133,16 @@ export default function Home() {
     showToast(`Deleted "${docName}" from session`);
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('legalpulse_sidebar_open', String(next));
+      }
+      return next;
+    });
+  };
+
   const handleCitationClick = React.useCallback((citation: Citation) => {
     setActiveCitation((prev) => {
       if (
@@ -140,29 +159,49 @@ export default function Home() {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
-        {/* Top Navbar */}
-        <Navbar
-          currentDoc={currentDoc}
+      <div className="flex h-screen w-screen overflow-hidden bg-background">
+        {/* Document & Chats Sidebar (ChatGPT & Gemini Style) */}
+        <DocumentSidebar
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          documents={documents}
+          currentDocId={currentDocId}
           onSelectDoc={(id) => {
             setCurrentDocId(id);
             setActiveCitation(null);
           }}
-          availableDocs={documents}
-          activeMode={activeMode}
-          onSelectMode={setActiveMode}
+          onRequestDeleteDoc={(doc) => setDocToDelete(doc)}
           onOpenUpload={() => setUploadModalOpen(true)}
           onOpenSettings={() => setApiKeyModalOpen(true)}
-          onOpenExport={() => setExportModalOpen(true)}
-          onRequestDeleteDoc={(doc) => setDocToDelete(doc)}
           apiKeySet={Boolean(apiKey)}
         />
 
-        {/* Legal Assistance Disclaimer Banner */}
-        <LegalDisclaimerBanner />
+        {/* Main Workstation Frame */}
+        <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+          {/* Top Navbar */}
+          <Navbar
+            currentDoc={currentDoc}
+            onSelectDoc={(id) => {
+              setCurrentDocId(id);
+              setActiveCitation(null);
+            }}
+            availableDocs={documents}
+            activeMode={activeMode}
+            onSelectMode={setActiveMode}
+            onOpenUpload={() => setUploadModalOpen(true)}
+            onOpenSettings={() => setApiKeyModalOpen(true)}
+            onOpenExport={() => setExportModalOpen(true)}
+            onRequestDeleteDoc={(doc) => setDocToDelete(doc)}
+            onToggleSidebar={toggleSidebar}
+            isSidebarOpen={sidebarOpen}
+            apiKeySet={Boolean(apiKey)}
+          />
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-hidden">
+          {/* Legal Assistance Disclaimer Banner */}
+          <LegalDisclaimerBanner />
+
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-hidden">
           {activeMode === 'comparison' ? (
             /* Mode 2: Contract-vs-Contract Comparison View */
             <ComparisonWorkspace
@@ -213,8 +252,9 @@ export default function Home() {
             </div>
           )}
         </main>
+      </div>
 
-        {/* Upload Modal with Uploaded Documents Management */}
+      {/* Upload Modal with Uploaded Documents Management */}
         <UploadModal
           isOpen={uploadModalOpen}
           onClose={() => setUploadModalOpen(false)}

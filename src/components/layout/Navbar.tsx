@@ -14,6 +14,7 @@ import {
   FileText,
   DownloadSimple,
   TrashSimple,
+  SidebarSimple,
 } from '@phosphor-icons/react';
 import { LegalDocument } from '@/lib/types';
 
@@ -27,6 +28,8 @@ interface NavbarProps {
   onOpenSettings: () => void;
   onOpenExport?: () => void;
   onRequestDeleteDoc?: (doc: LegalDocument) => void;
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
   apiKeySet: boolean;
 }
 
@@ -40,6 +43,8 @@ export function Navbar({
   onOpenSettings,
   onOpenExport,
   onRequestDeleteDoc,
+  onToggleSidebar,
+  isSidebarOpen,
   apiKeySet,
 }: NavbarProps) {
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
@@ -79,8 +84,20 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border/80 transition-colors">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-13 flex items-center justify-between gap-4">
-        {/* Brand & Logo */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Brand & Logo + Sidebar Toggle */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {onToggleSidebar && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="p-1.5 rounded-lg border border-border/80 bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all cursor-pointer shrink-0"
+              title={isSidebarOpen ? 'Collapse documents sidebar' : 'Open documents sidebar'}
+              aria-label={isSidebarOpen ? 'Collapse documents sidebar' : 'Open documents sidebar'}
+            >
+              <SidebarSimple size={15} />
+            </button>
+          )}
+
           <div className="w-7 h-7 rounded-md bg-foreground text-background flex items-center justify-center shadow-xs">
             <Scales size={15} weight="bold" />
           </div>
@@ -88,7 +105,7 @@ export function Navbar({
             <span className="font-semibold text-sm tracking-tight text-foreground">
               LegalPulse
             </span>
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border/70 font-medium">
+            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border/70 font-medium hidden sm:inline-block">
               Studio
             </span>
           </div>
