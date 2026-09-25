@@ -40,50 +40,48 @@ export function QuickActionChips({
   loading = false,
 }: QuickActionChipsProps) {
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wider">
-          <Sparkle size={14} className="text-emerald-600 dark:text-emerald-400" />
-          Guided Legal Workflows (One-Click Analysis)
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground tracking-tight">
+          <Sparkle size={13} className="text-foreground" />
+          <span>One-Click Legal Workflows</span>
         </div>
-        <span className="text-[11px] text-muted-foreground font-mono">
-          &lt; 40 Clicks Optimized
+        <span className="text-[10.5px] text-muted-foreground font-mono">
+          Interactive Audit
         </span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {QUICK_ACTIONS.map((action) => {
           const isActive = activeActionId === action.id;
-          const icon = ICON_MAP[action.iconName] || <FileText size={16} />;
+          const icon = ICON_MAP[action.iconName] || <FileText size={14} />;
 
           return (
             <button
               key={action.id}
               onClick={() => onSelectAction(action.id)}
               disabled={loading}
-              className={`p-2.5 rounded-lg border text-left flex flex-col justify-between transition-all duration-150 cursor-pointer ${
+              className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all duration-150 cursor-pointer ${
                 isActive
-                  ? 'border-primary bg-primary text-primary-foreground shadow-xs'
-                  : 'border-border bg-card hover:bg-secondary/70 text-card-foreground hover:border-border/80'
+                  ? 'border-foreground/30 bg-secondary text-foreground ring-1 ring-foreground/15 shadow-2xs'
+                  : 'border-border/80 bg-card hover:bg-secondary/50 text-foreground hover:border-foreground/20 shadow-2xs'
               } disabled:opacity-50`}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className={isActive ? 'text-primary-foreground' : 'text-primary'}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+                  isActive ? 'bg-foreground text-background' : 'bg-secondary text-muted-foreground'
+                }`}>
                   {icon}
                 </span>
                 {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 )}
               </div>
               <div>
-                <div className="text-xs font-semibold leading-tight line-clamp-1">
+                <div className="text-xs font-medium leading-tight line-clamp-1 tracking-tight">
                   {action.label}
                 </div>
-                <div
-                  className={`text-[10px] leading-tight line-clamp-1 mt-0.5 ${
-                    isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                  }`}
-                >
+                <div className="text-[10px] text-muted-foreground leading-tight line-clamp-1 mt-0.5">
                   {action.description}
                 </div>
               </div>

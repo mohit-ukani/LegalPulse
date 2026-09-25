@@ -118,20 +118,20 @@ export function AnalysisWorkspace({
   return (
     <div className="flex flex-col h-full bg-card overflow-hidden">
       {/* Workspace Tabs Header */}
-      <div className="h-12 border-b border-border px-3 bg-secondary/50 flex items-center justify-between gap-1 shrink-0">
+      <div className="h-11 border-b border-border/80 px-3 bg-card flex items-center justify-between gap-1 shrink-0">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1" role="tablist" aria-label="Analysis tools">
           <button
             onClick={() => setActiveTab('quick_actions')}
             role="tab"
             aria-selected={activeTab === 'quick_actions'}
             aria-controls="panel-quick-actions"
-            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'quick_actions'
-                ? 'bg-card text-foreground shadow-xs font-semibold'
+                ? 'bg-secondary text-foreground font-medium shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Sparkle size={14} className={activeTab === 'quick_actions' ? 'text-emerald-600' : ''} />
+            <Sparkle size={13} className={activeTab === 'quick_actions' ? 'text-foreground' : ''} />
             <span>Guided Actions</span>
           </button>
 
@@ -140,13 +140,13 @@ export function AnalysisWorkspace({
             role="tab"
             aria-selected={activeTab === 'chat'}
             aria-controls="panel-chat"
-            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'chat'
-                ? 'bg-card text-foreground shadow-xs font-semibold'
+                ? 'bg-secondary text-foreground font-medium shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <ChatText size={14} />
+            <ChatText size={13} />
             <span>Grounded Q&A</span>
           </button>
 
@@ -155,13 +155,13 @@ export function AnalysisWorkspace({
             role="tab"
             aria-selected={activeTab === 'risk'}
             aria-controls="panel-risk"
-            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'risk'
-                ? 'bg-card text-foreground shadow-xs font-semibold'
+                ? 'bg-secondary text-foreground font-medium shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <ShieldWarning size={14} />
+            <ShieldWarning size={13} />
             <span>Risk Heatmap</span>
           </button>
 
@@ -170,13 +170,13 @@ export function AnalysisWorkspace({
             role="tab"
             aria-selected={activeTab === 'multilingual'}
             aria-controls="panel-multilingual"
-            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'multilingual'
-                ? 'bg-card text-foreground shadow-xs font-semibold'
+                ? 'bg-secondary text-foreground font-medium shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Translate size={14} />
+            <Translate size={13} />
             <span>Multilingual</span>
           </button>
         </div>
@@ -205,57 +205,57 @@ export function AnalysisWorkspace({
 
             {/* Quick Action Result Details Card */}
             {actionLoading ? (
-              <div className="p-6 rounded-xl border border-border bg-card flex flex-col items-center justify-center space-y-2 text-center text-xs text-muted-foreground">
-                <Sparkle size={20} className="animate-spin text-emerald-600" />
-                <div>Analyzing clauses with Gemini 3.8 Flash...</div>
-                <div className="text-[10px]">Retrieving fine-grained citations and verifying text layout.</div>
+              <div className="p-8 rounded-xl border border-border/80 bg-card flex flex-col items-center justify-center space-y-2.5 text-center text-xs text-muted-foreground shadow-2xs">
+                <Sparkle size={18} className="animate-spin text-foreground" />
+                <div className="font-medium text-foreground">Analyzing clauses with Gemini 3.8 Flash...</div>
+                <div className="text-[11px] text-muted-foreground">Retrieving fine-grained citations and verifying text layout.</div>
               </div>
             ) : actionResult ? (
-              <div className="p-4 sm:p-5 rounded-xl border border-border bg-card shadow-xs space-y-4 animate-in fade-in">
+              <div className="p-5 rounded-xl border border-border/80 bg-card shadow-2xs space-y-4 animate-in fade-in">
                 {/* Result Title & Risk Badge */}
                 <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-3">
                   <div>
-                    <h3 className="font-bold text-sm text-foreground">
+                    <h3 className="font-semibold text-sm text-foreground tracking-tight">
                       {actionResult.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Verified from {document.title}
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Grounding verification · {document.title}
                     </p>
                   </div>
 
                   <span
-                    className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded flex items-center gap-1 shrink-0 ${
+                    className={`text-[10px] font-medium tracking-wide uppercase px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 shrink-0 ${
                       actionResult.riskRating === 'high'
-                        ? 'bg-red-500/15 text-red-700 dark:text-red-300'
+                        ? 'bg-risk-high-bg text-risk-high-text border-risk-high-border'
                         : actionResult.riskRating === 'medium'
-                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
-                        : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                        ? 'bg-risk-medium-bg text-risk-medium-text border-risk-medium-border'
+                        : 'bg-risk-low-bg text-risk-low-text border-risk-low-border'
                     }`}
                   >
-                    {actionResult.riskRating === 'high' && <ShieldWarning size={12} weight="fill" />}
-                    {actionResult.riskRating === 'medium' && <WarningCircle size={12} weight="fill" />}
-                    {actionResult.riskRating === 'low' && <CheckCircle size={12} weight="fill" />}
-                    {actionResult.riskRating} Risk Level
+                    {actionResult.riskRating === 'high' && <ShieldWarning size={11} weight="fill" />}
+                    {actionResult.riskRating === 'medium' && <WarningCircle size={11} weight="fill" />}
+                    {actionResult.riskRating === 'low' && <CheckCircle size={11} weight="fill" />}
+                    {actionResult.riskRating} Risk
                   </span>
                 </div>
 
                 {/* Plain English Summary */}
                 <div className="space-y-1">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Plain English Breakdown:
+                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Plain English Breakdown
                   </div>
-                  <p className="text-xs sm:text-sm text-foreground leading-relaxed">
+                  <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">
                     {actionResult.plainEnglishSummary}
                   </p>
                 </div>
 
                 {/* Legal Implications */}
-                <div className="space-y-1 p-3 rounded-lg bg-secondary/60 text-xs">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-primary flex items-center gap-1">
-                    <Scales size={13} />
-                    Legal Implications & Exposure:
+                <div className="space-y-1.5 p-3 rounded-lg bg-secondary/50 border border-border/60 text-xs">
+                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-foreground flex items-center gap-1">
+                    <Scales size={12} />
+                    Legal Implications & Exposure
                   </div>
-                  <p className="text-foreground/90 leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed text-[12px]">
                     {actionResult.legalImplications}
                   </p>
                 </div>
@@ -263,9 +263,9 @@ export function AnalysisWorkspace({
                 {/* Grounded Visual Citations */}
                 {actionResult.citations.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                      <BookmarkSimple size={13} weight="fill" className="text-amber-600" />
-                      Visual Citations (Click to Highlight in Left PDF Viewer):
+                    <div className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <BookmarkSimple size={12} weight="fill" className="text-amber-500" />
+                      Visual Citations (Click to jump & highlight)
                     </div>
                     <div className="space-y-2">
                       {actionResult.citations.map((c, i) => (
@@ -286,19 +286,19 @@ export function AnalysisWorkspace({
                 {/* Suggested Questions for Legal Counsel */}
                 {actionResult.suggestedLegalQuestions.length > 0 && (
                   <div className="space-y-2 pt-2 border-t border-border/50">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Specific Questions to Clarify with a Legal Professional:
+                    <div className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Counsel Clarification Questions
                     </div>
                     <div className="space-y-1.5">
                       {actionResult.suggestedLegalQuestions.map((q, idx) => (
                         <div
                           key={idx}
-                          className="p-2 rounded bg-secondary/40 border border-border/50 flex items-center justify-between text-xs text-foreground group"
+                          className="p-2.5 rounded-lg bg-secondary/40 border border-border/60 flex items-center justify-between text-xs text-foreground group"
                         >
-                          <span className="leading-snug pr-2">&ldquo;{q}&rdquo;</span>
+                          <span className="leading-snug pr-2 text-foreground/90">&ldquo;{q}&rdquo;</span>
                           <button
                             onClick={() => handleAskInChat(q)}
-                            className="text-[10px] font-medium text-primary hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
+                            className="text-[10.5px] font-medium text-foreground hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
                           >
                             Ask in Chat
                             <ArrowRight size={10} />
@@ -311,14 +311,14 @@ export function AnalysisWorkspace({
 
                 {/* Actionable Next Steps */}
                 {actionResult.actionableNextSteps.length > 0 && (
-                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-950 dark:text-emerald-200 space-y-2">
+                  <div className="p-3.5 rounded-lg bg-secondary/50 border border-border/70 text-xs text-foreground space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="font-semibold text-[11px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                        Actionable Next Steps & Strategy:
+                      <div className="font-semibold text-[10.5px] uppercase tracking-wider text-foreground">
+                        Actionable Next Steps & Strategy
                       </div>
                       <button
                         onClick={handleCopyActionPlan}
-                        className="text-[10px] font-medium text-emerald-800 dark:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[10.5px] font-medium text-muted-foreground hover:text-foreground hover:underline flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         {copiedActionPlan ? (
                           <>
@@ -333,9 +333,9 @@ export function AnalysisWorkspace({
                         )}
                       </button>
                     </div>
-                    <ul className="list-disc pl-4 space-y-0.5">
+                    <ul className="list-disc pl-4 space-y-1 text-muted-foreground text-[12px]">
                       {actionResult.actionableNextSteps.map((step, sidx) => (
-                        <li key={sidx} className="leading-normal">
+                        <li key={sidx} className="leading-relaxed">
                           {step}
                         </li>
                       ))}

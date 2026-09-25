@@ -174,31 +174,31 @@ export function GroundedChat({
               className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
             >
               <div
-                className={`max-w-[92%] rounded-xl p-3.5 text-xs sm:text-sm leading-relaxed ${
+                className={`max-w-[92%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed ${
                   isUser
-                    ? 'bg-primary text-primary-foreground font-medium rounded-tr-xs'
-                    : 'bg-secondary/70 text-foreground border border-border rounded-tl-xs shadow-2xs'
+                    ? 'bg-foreground text-background font-normal rounded-tr-xs shadow-2xs'
+                    : 'bg-secondary/40 text-foreground border border-border/80 rounded-tl-xs shadow-2xs'
                 }`}
               >
                 {!isUser && (
-                  <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border/40 text-[11px] font-semibold text-primary">
+                  <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border/50 text-[11px] font-medium text-foreground">
                     <span className="flex items-center gap-1.5">
-                      <Sparkle size={13} className="text-emerald-600" />
-                      LegalPulse AI Analysis
+                      <Sparkle size={12} className="text-foreground" />
+                      LegalPulse Intelligence
                     </span>
                     <button
                       onClick={() => copyForLawyer(msg.content, msg.id)}
-                      className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[10px] font-normal cursor-pointer"
+                      className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[10px] font-normal cursor-pointer transition-colors"
                       title="Copy text for your lawyer"
                     >
                       {copiedId === msg.id ? (
                         <>
-                          <Check size={12} className="text-emerald-500" />
+                          <Check size={11} className="text-emerald-500" />
                           <span>Copied</span>
                         </>
                       ) : (
                         <>
-                          <Copy size={12} />
+                          <Copy size={11} />
                           <span>Copy for Lawyer</span>
                         </>
                       )}
@@ -208,10 +208,10 @@ export function GroundedChat({
 
                 {/* Missing Information Notice Banner */}
                 {msg.isMissingInfoNotice && (
-                  <div className="mb-2.5 p-2.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2">
-                    <WarningCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold">Explicit Absence Verification:</span> This document contains zero mention of this topic. The system will never fabricate missing clauses.
+                  <div className="mb-2.5 p-2.5 rounded-lg bg-secondary/80 border border-border/80 text-foreground text-xs flex items-start gap-2">
+                    <WarningCircle size={15} className="text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="text-[11.5px] leading-relaxed">
+                      <span className="font-semibold text-foreground">Verified Clause Absence:</span> This document contains no mention of this topic. The engine will never hallucinate absent covenants.
                     </div>
                   </div>
                 )}
@@ -246,21 +246,21 @@ export function GroundedChat({
 
                 {/* Suggested Legal Questions to Ask */}
                 {msg.suggestedQuestions && msg.suggestedQuestions.length > 0 && (
-                  <div className="mt-3 pt-2 border-t border-border/40">
-                    <div className="text-[10px] font-semibold uppercase text-muted-foreground mb-1.5">
-                      Suggested Questions to Clarify with Legal Professional:
+                  <div className="mt-3 pt-2 border-t border-border/50">
+                    <div className="text-[10px] font-semibold uppercase text-muted-foreground mb-1.5 tracking-wider">
+                      Suggested Follow-Up Clarifications
                     </div>
                     <div className="space-y-1">
                       {msg.suggestedQuestions.map((q, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleSend(q)}
-                          className="w-full text-left p-1.5 rounded bg-card hover:bg-muted text-[11px] text-foreground border border-border/60 flex items-center justify-between group cursor-pointer transition-colors"
+                          className="w-full text-left p-2 rounded-lg bg-secondary/40 hover:bg-secondary text-[11px] text-foreground border border-border/60 flex items-center justify-between group cursor-pointer transition-colors"
                         >
-                          <span className="truncate pr-2">&ldquo;{q}&rdquo;</span>
+                          <span className="truncate pr-2 text-foreground/90">&ldquo;{q}&rdquo;</span>
                           <ArrowRight
-                            size={12}
-                            className="text-muted-foreground group-hover:text-primary shrink-0 transition-transform group-hover:translate-x-0.5"
+                            size={11}
+                            className="text-muted-foreground group-hover:text-foreground shrink-0 transition-transform group-hover:translate-x-0.5"
                           />
                         </button>
                       ))}
@@ -268,7 +268,7 @@ export function GroundedChat({
                   </div>
                 )}
               </div>
-              <span className="text-[9px] font-mono text-muted-foreground mt-1 px-1">
+              <span className="text-[9.5px] font-mono text-muted-foreground mt-1 px-1">
                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -276,9 +276,9 @@ export function GroundedChat({
         })}
 
         {loading && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border w-fit text-xs text-muted-foreground">
-            <Sparkle size={14} className="animate-spin text-emerald-600" />
-            <span>Retrieving text chunks & verifying visual citations with Gemini...</span>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/40 border border-border/70 w-fit text-xs text-muted-foreground">
+            <Sparkle size={13} className="animate-spin text-foreground" />
+            <span>Retrieving text chunks & verifying visual citations with Gemini 3.8 Flash...</span>
           </div>
         )}
 
@@ -287,9 +287,9 @@ export function GroundedChat({
 
       {/* Starter Prompts Bar (when few messages) */}
       {messages.length <= 3 && (
-        <div className="px-4 py-2 bg-secondary/30 border-t border-border/50">
+        <div className="px-4 py-2 bg-secondary/20 border-t border-border/60">
           <div className="text-[10px] font-medium text-muted-foreground mb-1.5">
-            Quick Questions:
+            Suggested Inquiries:
           </div>
           <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             {STARTER_PROMPTS.map((prompt, i) => (
@@ -297,7 +297,7 @@ export function GroundedChat({
                 key={i}
                 onClick={() => handleSend(prompt)}
                 disabled={loading}
-                className="whitespace-nowrap px-2.5 py-1 rounded-full bg-card hover:bg-secondary text-[11px] text-foreground border border-border shrink-0 cursor-pointer transition-colors disabled:opacity-50"
+                className="whitespace-nowrap px-2.5 py-1 rounded-full bg-card hover:bg-secondary text-[11px] text-foreground border border-border/70 shrink-0 cursor-pointer transition-colors disabled:opacity-50"
               >
                 {prompt}
               </button>
@@ -307,7 +307,7 @@ export function GroundedChat({
       )}
 
       {/* Query Input Box */}
-      <div className="p-3 bg-card border-t border-border">
+      <div className="p-3 bg-card border-t border-border/80">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -321,20 +321,20 @@ export function GroundedChat({
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             disabled={loading}
-            className="flex-1 h-9 px-3 text-xs rounded-md bg-secondary border border-border focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+            className="flex-1 h-9 px-3.5 text-xs rounded-xl bg-secondary/60 hover:bg-secondary/80 focus:bg-background border border-border/70 focus:border-foreground/30 focus:outline-none transition-all text-foreground placeholder:text-muted-foreground"
           />
           <button
             type="submit"
             disabled={!inputQuery.trim() || loading}
-            className="h-9 px-3.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 flex items-center justify-center transition-colors cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-foreground text-background hover:opacity-90 disabled:opacity-30 flex items-center justify-center transition-all cursor-pointer active:scale-[0.98]"
           >
-            <PaperPlaneRight size={14} weight="bold" />
+            <PaperPlaneRight size={13} weight="bold" />
           </button>
         </form>
         <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
           <span>Every statement is linked to an exact page & clause.</span>
-          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-            <ShieldCheck size={11} weight="fill" />
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <ShieldCheck size={11} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
             Zero-Hallucination Grounding
           </span>
         </div>

@@ -171,36 +171,36 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
   };
 
   return (
-    <div className="p-4 sm:p-5 space-y-6 overflow-y-auto h-full">
+    <div className="p-4 sm:p-5 space-y-5 overflow-y-auto h-full">
       {/* Top Header Card with Risk Score */}
       <div
-        className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+        className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs ${
           isHighRisk
-            ? 'bg-red-500/10 border-red-500/30'
+            ? 'bg-risk-high-bg border-risk-high-border'
             : isMediumRisk
-            ? 'bg-amber-500/10 border-amber-500/30'
-            : 'bg-emerald-500/10 border-emerald-500/30'
+            ? 'bg-risk-medium-bg border-risk-medium-border'
+            : 'bg-risk-low-bg border-risk-low-border'
         }`}
       >
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            {isHighRisk && <ShieldWarning size={20} className="text-red-600" weight="fill" />}
-            {isMediumRisk && <Warning size={20} className="text-amber-600" weight="fill" />}
-            {!isHighRisk && !isMediumRisk && <CheckCircle size={20} className="text-emerald-600" weight="fill" />}
-            <span className="font-bold text-sm uppercase tracking-wide">
-              {report.overallRisk} Risk Contract Rating
+            {isHighRisk && <ShieldWarning size={18} className="text-risk-high-text" weight="fill" />}
+            {isMediumRisk && <Warning size={18} className="text-risk-medium-text" weight="fill" />}
+            {!isHighRisk && !isMediumRisk && <CheckCircle size={18} className="text-risk-low-text" weight="fill" />}
+            <span className="font-semibold text-sm uppercase tracking-tight text-foreground">
+              {report.overallRisk} Risk Rating
             </span>
           </div>
           <p className="text-xs text-foreground/80 leading-relaxed max-w-xl">
             {report.executiveVerdict}
           </p>
           {onOpenExport && (
-            <div className="pt-1.5">
+            <div className="pt-1">
               <button
                 onClick={onOpenExport}
-                className="px-3 py-1 rounded-md bg-card border border-border hover:bg-secondary text-foreground text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                className="px-3 py-1 rounded-lg bg-card border border-border/80 hover:bg-secondary text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
               >
-                <DownloadSimple size={13} />
+                <DownloadSimple size={12} />
                 Export Full Audit Memo
               </button>
             </div>
@@ -208,67 +208,73 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
         </div>
 
         {/* Risk Meter Dial */}
-        <div className="flex flex-col items-center justify-center px-4 py-2 rounded-lg bg-card border border-border shrink-0 self-end sm:self-auto">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+        <div className="flex flex-col items-center justify-center px-4 py-2.5 rounded-xl bg-card border border-border/80 shadow-2xs shrink-0 self-end sm:self-auto">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             Risk Index
           </span>
           <span
             className={`text-2xl font-bold font-mono ${
               isHighRisk
-                ? 'text-red-600'
+                ? 'text-risk-high-text'
                 : isMediumRisk
-                ? 'text-amber-600'
-                : 'text-emerald-600'
+                ? 'text-risk-medium-text'
+                : 'text-risk-low-text'
             }`}
           >
             {report.riskScore}/100
           </span>
-          <span className="text-[9px] text-muted-foreground">
-            {isHighRisk ? 'Immediate Review' : 'Manageable'}
+          <span className="text-[9.5px] text-muted-foreground">
+            {isHighRisk ? 'Immediate Review' : 'Balanced Terms'}
           </span>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2.5">
         <button
           onClick={() => setFilter(filter === 'high' ? 'all' : 'high')}
-          className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${
-            filter === 'high' ? 'ring-2 ring-red-500 bg-red-500/10' : 'bg-card border-red-500/30 hover:bg-red-500/5'
+          className={`p-3 rounded-xl border text-center transition-all cursor-pointer shadow-2xs ${
+            filter === 'high'
+              ? 'ring-1 ring-foreground/20 border-foreground/30 bg-secondary'
+              : 'bg-card border-border/80 hover:bg-secondary/40 hover:border-foreground/20'
           }`}
         >
-          <div className="text-lg font-bold text-red-600 font-mono">
+          <div className="text-lg font-bold text-risk-high-text font-mono">
             {report.highRiskCount}
           </div>
-          <div className="text-[10px] font-medium text-muted-foreground uppercase mt-0.5">
-            High Risk Clauses
+          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
+            High Risk
           </div>
         </button>
 
         <button
           onClick={() => setFilter(filter === 'medium' ? 'all' : 'medium')}
-          className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${
-            filter === 'medium' ? 'ring-2 ring-amber-500 bg-amber-500/10' : 'bg-card border-amber-500/30 hover:bg-amber-500/5'
+          className={`p-3 rounded-xl border text-center transition-all cursor-pointer shadow-2xs ${
+            filter === 'medium'
+              ? 'ring-1 ring-foreground/20 border-foreground/30 bg-secondary'
+              : 'bg-card border-border/80 hover:bg-secondary/40 hover:border-foreground/20'
           }`}
         >
-          <div className="text-lg font-bold text-amber-600 font-mono">
+          <div className="text-lg font-bold text-risk-medium-text font-mono">
             {report.mediumRiskCount}
           </div>
-          <div className="text-[10px] font-medium text-muted-foreground uppercase mt-0.5">
+          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
             Medium Risk
           </div>
         </button>
 
         <button
           onClick={() => setFilter(filter === 'low' ? 'all' : 'low')}
-          className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${
-            filter === 'low' ? 'ring-2 ring-emerald-500 bg-emerald-500/10' : 'bg-card border-emerald-500/30 hover:bg-emerald-500/5'
+          className={`p-3 rounded-xl border text-center transition-all cursor-pointer shadow-2xs ${
+            filter === 'low'
+              ? 'ring-1 ring-foreground/20 border-foreground/30 bg-secondary'
+              : 'bg-card border-border/80 hover:bg-secondary/40 hover:border-foreground/20'
           }`}
         >
-          <div className="text-lg font-bold text-emerald-600 font-mono">
+          <div className="text-lg font-bold text-risk-low-text font-mono">
             {report.lowRiskCount}
           </div>
-          <div className="text-[10px] font-medium text-muted-foreground uppercase mt-0.5">
+          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
             Standard / Safe
           </div>
         </button>
@@ -277,18 +283,18 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
       {/* Critical Warnings */}
       {report.criticalWarnings.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400 flex items-center gap-1.5">
-            <ShieldWarning size={15} weight="fill" />
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-risk-high-text flex items-center gap-1.5">
+            <ShieldWarning size={14} weight="fill" />
             Critical Red Flags & High-Liability Terms
           </h4>
           <div className="space-y-1.5">
             {report.criticalWarnings.map((warning, idx) => (
               <div
                 key={idx}
-                className="p-2.5 rounded-lg bg-red-500/5 border border-red-500/20 text-xs text-foreground flex items-start gap-2"
+                className="p-2.5 rounded-lg bg-risk-high-bg/50 border border-risk-high-border/70 text-xs text-foreground flex items-start gap-2"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1.5" />
-                <span className="leading-relaxed">{warning}</span>
+                <span className="leading-relaxed text-[12px]">{warning}</span>
               </div>
             ))}
           </div>
@@ -298,18 +304,18 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
       {/* Recommended Negotiation Points */}
       {report.recommendedNegotiations.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-            <Lightbulb size={15} weight="fill" />
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-risk-low-text flex items-center gap-1.5">
+            <Lightbulb size={14} weight="fill" />
             Strategic Negotiation Leverage for Legal Counsel
           </h4>
           <div className="space-y-1.5">
             {report.recommendedNegotiations.map((point, idx) => (
               <div
                 key={idx}
-                className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-xs text-foreground flex items-start gap-2"
+                className="p-2.5 rounded-lg bg-risk-low-bg/50 border border-risk-low-border/70 text-xs text-foreground flex items-start gap-2"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
-                <span className="leading-relaxed">{point}</span>
+                <span className="leading-relaxed text-[12px]">{point}</span>
               </div>
             ))}
           </div>
@@ -319,22 +325,22 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
       {/* Detailed Clause Audit List */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-            <Scales size={15} />
-            Clause-by-Clause Audit & Visual Grounding
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+            <Scales size={14} />
+            Clause-by-Clause Audit & Grounding
           </h4>
 
           {filter !== 'all' && (
             <button
               onClick={() => setFilter('all')}
-              className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
+              className="text-[11px] text-foreground hover:underline font-medium cursor-pointer"
             >
               Reset filter ({filteredClauses.length} shown)
             </button>
           )}
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {filteredClauses.map((clause) => {
             const isHigh = clause.riskLevel === 'high';
             const isMed = clause.riskLevel === 'medium';
@@ -354,41 +360,35 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
                     riskLevel: clause.riskLevel,
                   })
                 }
-                className={`p-3 rounded-lg border text-xs transition-all duration-150 cursor-pointer ${
-                  isHigh
-                    ? 'border-red-500/30 bg-card hover:bg-red-500/5'
-                    : isMed
-                    ? 'border-amber-500/30 bg-card hover:bg-amber-500/5'
-                    : 'border-border bg-card hover:bg-secondary/50'
-                }`}
+                className="p-3.5 rounded-xl border border-border/80 bg-card hover:bg-secondary/40 hover:border-foreground/20 text-xs transition-all duration-150 cursor-pointer shadow-2xs"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="font-semibold text-foreground flex items-center gap-1.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="font-medium text-foreground flex items-center gap-1.5">
                     <span className="font-mono text-[11px] text-muted-foreground">
                       {clause.sectionNumber}
                     </span>
-                    <span>·</span>
+                    <span className="text-muted-foreground">·</span>
                     <span className="truncate">{clause.title}</span>
                   </div>
 
                   <span
-                    className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded ${
+                    className={`text-[9.5px] font-medium tracking-wide uppercase px-2 py-0.5 rounded-full border ${
                       isHigh
-                        ? 'bg-red-500/15 text-red-700 dark:text-red-300'
+                        ? 'bg-risk-high-bg text-risk-high-text border-risk-high-border'
                         : isMed
-                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
-                        : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                        ? 'bg-risk-medium-bg text-risk-medium-text border-risk-medium-border'
+                        : 'bg-risk-low-bg text-risk-low-text border-risk-low-border'
                     }`}
                   >
                     {clause.riskLevel} Risk
                   </span>
                 </div>
 
-                <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+                <p className="text-[11.5px] text-muted-foreground leading-relaxed line-clamp-2">
                   {clause.implication}
                 </p>
 
-                <div className="mt-2 flex items-center justify-between text-[10px] text-primary pt-1.5 border-t border-border/40">
+                <div className="mt-2.5 flex items-center justify-between text-[10.5px] text-foreground pt-2 border-t border-border/50">
                   <span className="text-muted-foreground font-mono">
                     Page {clause.pageNumber}
                   </span>
@@ -397,7 +397,7 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
                     {(isHigh || isMed) && (
                       <button
                         onClick={(e) => handleCopyCounter(clause, e)}
-                        className="flex items-center gap-1 text-[10px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                        className="flex items-center gap-1 text-[10.5px] font-medium text-foreground hover:underline cursor-pointer transition-colors"
                         title="Copy balanced reciprocal counter-clause to clipboard"
                       >
                         {isCopied ? (
@@ -416,7 +416,7 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
 
                     <span className="flex items-center gap-1 font-medium hover:underline">
                       View in PDF
-                      <ArrowRight size={11} />
+                      <ArrowRight size={10} />
                     </span>
                   </div>
                 </div>

@@ -71,18 +71,18 @@ export function ComparisonWorkspace({
   return (
     <div className="flex flex-col h-full bg-background overflow-y-auto">
       {/* Top Banner Header */}
-      <div className="bg-card border-b border-border p-4 sm:p-6 sticky top-0 z-10 shadow-xs">
+      <div className="bg-card border-b border-border/80 px-4 sm:px-6 py-3.5 sticky top-0 z-10 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-emerald-500/10 text-emerald-600">
-                <GitDiff size={20} weight="bold" />
+              <div className="w-6 h-6 rounded-md bg-secondary flex items-center justify-center text-foreground">
+                <GitDiff size={15} weight="bold" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-foreground">
+              <h2 className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
                 Bilateral Contract Comparison & Risk Delta
               </h2>
             </div>
-            <p className="text-xs text-muted-foreground mt-1 max-w-3xl">
+            <p className="text-xs text-muted-foreground mt-0.5 max-w-3xl leading-relaxed">
               {comparison.summary}
             </p>
           </div>
@@ -90,7 +90,7 @@ export function ComparisonWorkspace({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={onBackToWorkstation}
-              className="px-3.5 py-1.5 rounded-lg border border-border bg-secondary hover:bg-muted text-xs font-medium text-foreground transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg border border-border/80 bg-secondary/70 hover:bg-secondary text-xs font-medium text-foreground transition-all cursor-pointer shadow-2xs"
             >
               Back to Split Workstation
             </button>
@@ -98,33 +98,28 @@ export function ComparisonWorkspace({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 w-full">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5 w-full">
         {/* Loading State */}
         {loadingComparison && (
-          <div className="p-6 rounded-xl border border-border bg-card flex flex-col items-center justify-center space-y-3 text-center">
-            <Sparkle size={24} className="animate-spin text-emerald-600" />
+          <div className="p-8 rounded-2xl border border-border/80 bg-card flex flex-col items-center justify-center space-y-2.5 text-center shadow-2xs">
+            <Sparkle size={18} className="animate-spin text-foreground" />
             <div className="text-xs font-medium text-foreground">Analyzing bilateral contract provisions...</div>
-            <div className="text-[10px] text-muted-foreground max-w-sm">
+            <div className="text-[11px] text-muted-foreground max-w-sm">
               Comparing clause-by-clause differences, risk shifts, and strategic implications across both agreements.
-            </div>
-            <div className="w-full max-w-xs space-y-2 mt-2">
-              <div className="h-2 bg-secondary rounded-full animate-pulse" />
-              <div className="h-2 bg-secondary rounded-full animate-pulse w-4/5" />
-              <div className="h-2 bg-secondary rounded-full animate-pulse w-3/5" />
             </div>
           </div>
         )}
 
         {/* Strategic Takeaways Box */}
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-2">
-          <div className="font-bold text-xs uppercase tracking-wider text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
-            <ShieldCheck size={16} weight="fill" className="text-emerald-600" />
-            Key Strategic Upgrades in Negotiated Agreement (Version 2)
+        <div className="p-4 sm:p-5 rounded-2xl bg-secondary/40 border border-border/80 text-xs space-y-2.5 shadow-2xs">
+          <div className="font-semibold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
+            <ShieldCheck size={15} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
+            Strategic Upgrades in Revised Agreement (Version 2)
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-emerald-950 dark:text-emerald-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-foreground/90 text-[12px]">
             {comparison.strategicAdvice.map((advice, i) => (
-              <div key={i} className="flex items-start gap-1.5 leading-relaxed">
-                <CheckCircle size={14} className="text-emerald-600 shrink-0 mt-0.5" weight="fill" />
+              <div key={i} className="flex items-start gap-2 leading-relaxed">
+                <CheckCircle size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" weight="fill" />
                 <span>{advice}</span>
               </div>
             ))}
@@ -132,40 +127,40 @@ export function ComparisonWorkspace({
         </div>
 
         {/* Added vs Removed Clauses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {/* Removed High-Risk Clauses */}
-          <div className="p-4 rounded-xl border border-red-500/30 bg-card space-y-2.5">
-            <div className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400 flex items-center gap-1.5">
-              <MinusCircle size={16} weight="fill" />
+          <div className="p-4 sm:p-5 rounded-2xl border border-risk-high-border/70 bg-card space-y-2.5 shadow-2xs">
+            <div className="text-xs font-semibold uppercase tracking-wider text-risk-high-text flex items-center gap-1.5">
+              <MinusCircle size={15} weight="fill" />
               Stripped Onerous Clauses ({comparison.removedClauses.length})
             </div>
             <div className="space-y-1.5">
               {comparison.removedClauses.map((clause, idx) => (
                 <div
                   key={idx}
-                  className="p-2 rounded bg-red-500/5 border border-red-500/15 text-xs text-foreground flex items-start gap-2"
+                  className="p-2.5 rounded-lg bg-risk-high-bg/50 border border-risk-high-border/60 text-xs text-foreground flex items-start gap-2"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1.5" />
-                  <span className="leading-snug">{clause}</span>
+                  <span className="leading-relaxed text-[12px]">{clause}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Added Employee Protections */}
-          <div className="p-4 rounded-xl border border-emerald-500/30 bg-card space-y-2.5">
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-              <PlusCircle size={16} weight="fill" />
+          <div className="p-4 sm:p-5 rounded-2xl border border-risk-low-border/70 bg-card space-y-2.5 shadow-2xs">
+            <div className="text-xs font-semibold uppercase tracking-wider text-risk-low-text flex items-center gap-1.5">
+              <PlusCircle size={15} weight="fill" />
               Added Protective Terms ({comparison.addedClauses.length})
             </div>
             <div className="space-y-1.5">
               {comparison.addedClauses.map((clause, idx) => (
                 <div
                   key={idx}
-                  className="p-2 rounded bg-emerald-500/5 border border-emerald-500/15 text-xs text-foreground flex items-start gap-2"
+                  className="p-2.5 rounded-lg bg-risk-low-bg/50 border border-risk-low-border/60 text-xs text-foreground flex items-start gap-2"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
-                  <span className="leading-snug">{clause}</span>
+                  <span className="leading-relaxed text-[12px]">{clause}</span>
                 </div>
               ))}
             </div>
@@ -174,18 +169,18 @@ export function ComparisonWorkspace({
 
         {/* Category Filter Pills */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Filter by Legal Domain:
+          <label className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Filter by Domain
           </label>
           <div className="flex flex-wrap gap-1.5">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer ${
                   activeCategory === cat
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card text-foreground border-border hover:bg-secondary'
+                    ? 'bg-secondary text-foreground border-foreground/30 ring-1 ring-foreground/15 shadow-2xs'
+                    : 'bg-card text-muted-foreground hover:text-foreground border-border/80 hover:bg-secondary/40'
                 }`}
               >
                 {cat === 'all' ? 'All Terms' : cat}
@@ -195,28 +190,28 @@ export function ComparisonWorkspace({
         </div>
 
         {/* Side-by-Side Clause Diffs */}
-        <div className="space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-            Side-by-Side Provision Diff & Grounded Analysis
+        <div className="space-y-3 pt-1">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            Side-by-Side Provision Comparison & Grounding
           </h3>
 
           <div className="space-y-3">
             {filteredDifferences.map((diff, index) => (
               <div
                 key={index}
-                className="p-4 sm:p-5 rounded-xl border border-border bg-card shadow-xs space-y-3"
+                className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-card shadow-2xs space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-secondary text-primary font-semibold">
+                    <span className="text-[10.5px] font-mono uppercase px-2 py-0.5 rounded-full bg-secondary border border-border/70 text-foreground font-medium">
                       {diff.category}
                     </span>
-                    <span className="font-bold text-xs sm:text-sm text-foreground">
+                    <span className="font-semibold text-xs sm:text-sm text-foreground tracking-tight">
                       {diff.term}
                     </span>
                   </div>
 
-                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                  <span className="text-[10px] font-medium tracking-wide uppercase px-2.5 py-0.5 rounded-full bg-risk-low-bg text-risk-low-text border border-risk-low-border">
                     Risk Shift: {diff.riskDelta}
                   </span>
                 </div>
@@ -224,34 +219,34 @@ export function ComparisonWorkspace({
                 {/* 2-Column Split View */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                   {/* Document A (Original) */}
-                  <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-red-800 dark:text-red-300">
+                  <div className="p-3 rounded-xl bg-risk-high-bg/50 border border-risk-high-border/60 text-xs space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-risk-high-text">
                       <span>Original Agreement (v1)</span>
-                      <span className="text-[10px] font-mono">HIGH RISK</span>
+                      <span className="text-[9.5px] font-mono uppercase tracking-wider">High Liability</span>
                     </div>
-                    <p className="text-foreground leading-relaxed">
+                    <p className="text-foreground/90 leading-relaxed text-[12px]">
                       {diff.inDocA}
                     </p>
                     {diff.citationA && (
-                      <div className="text-[10px] text-muted-foreground font-mono pt-1 border-t border-red-500/10 flex items-center gap-1">
-                        <BookmarkSimple size={12} weight="fill" className="text-red-600" />
+                      <div className="text-[10px] text-muted-foreground font-mono pt-1.5 border-t border-risk-high-border/40 flex items-center gap-1">
+                        <BookmarkSimple size={11} weight="fill" className="text-red-500" />
                         Page {diff.citationA.pageNumber} · {diff.citationA.sectionNumber}
                       </div>
                     )}
                   </div>
 
                   {/* Document B (Revised Fair) */}
-                  <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
+                  <div className="p-3 rounded-xl bg-risk-low-bg/50 border border-risk-low-border/60 text-xs space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-risk-low-text">
                       <span>Revised Fair Agreement (v2)</span>
-                      <span className="text-[10px] font-mono">BALANCED</span>
+                      <span className="text-[9.5px] font-mono uppercase tracking-wider">Balanced</span>
                     </div>
-                    <p className="text-foreground leading-relaxed">
+                    <p className="text-foreground/90 leading-relaxed text-[12px]">
                       {diff.inDocB}
                     </p>
                     {diff.citationB && (
-                      <div className="text-[10px] text-muted-foreground font-mono pt-1 border-t border-emerald-500/10 flex items-center gap-1">
-                        <BookmarkSimple size={12} weight="fill" className="text-emerald-600" />
+                      <div className="text-[10px] text-muted-foreground font-mono pt-1.5 border-t border-risk-low-border/40 flex items-center gap-1">
+                        <BookmarkSimple size={11} weight="fill" className="text-emerald-500" />
                         Page {diff.citationB.pageNumber} · {diff.citationB.sectionNumber}
                       </div>
                     )}
@@ -259,10 +254,10 @@ export function ComparisonWorkspace({
                 </div>
 
                 {/* Analysis Synthesis */}
-                <div className="p-2.5 rounded-lg bg-secondary/50 text-xs text-foreground/90 flex items-start gap-2">
-                  <Sparkle size={14} className="text-primary shrink-0 mt-0.5" />
-                  <div className="leading-normal">
-                    <span className="font-semibold text-primary">Strategic Impact:</span>{' '}
+                <div className="p-3 rounded-xl bg-secondary/40 border border-border/60 text-xs text-foreground/90 flex items-start gap-2">
+                  <Sparkle size={13} className="text-foreground shrink-0 mt-0.5" />
+                  <div className="leading-relaxed text-[12px]">
+                    <span className="font-semibold text-foreground">Strategic Impact:</span>{' '}
                     {diff.analysis}
                   </div>
                 </div>

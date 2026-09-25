@@ -74,19 +74,19 @@ export function Navbar({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-card border-b border-border shadow-xs">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border/80 transition-colors">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-13 flex items-center justify-between gap-4">
         {/* Brand & Logo */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
-            <Scales size={18} weight="bold" />
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="w-7 h-7 rounded-md bg-foreground text-background flex items-center justify-center shadow-xs">
+            <Scales size={15} weight="bold" />
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-bold text-base tracking-tight text-foreground">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm tracking-tight text-foreground">
               LegalPulse
             </span>
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-accent/15 text-emerald-700 dark:text-emerald-300 font-semibold">
-              AI Workstation
+            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border/70 font-medium">
+              Studio
             </span>
           </div>
         </div>
@@ -99,14 +99,14 @@ export function Navbar({
               onClick={() => setDocDropdownOpen(!docDropdownOpen)}
               aria-haspopup="listbox"
               aria-expanded={docDropdownOpen}
-              className="w-full h-8.5 px-2.5 rounded-md bg-secondary hover:bg-muted text-foreground border border-border flex items-center justify-between text-xs font-medium transition-colors cursor-pointer min-w-0"
+              className="w-full h-8 px-2.5 rounded-lg bg-secondary/70 hover:bg-secondary text-foreground border border-border/70 flex items-center justify-between text-xs font-medium transition-all cursor-pointer min-w-0"
               title={currentDoc.title}
             >
               <div className="flex items-center gap-1.5 min-w-0 truncate">
-                <FileText size={15} className="text-muted-foreground shrink-0" />
+                <FileText size={14} className="text-muted-foreground shrink-0" />
                 <span className="truncate text-xs">{currentDoc.title}</span>
               </div>
-              <CaretDown size={12} className="text-muted-foreground shrink-0 ml-1" />
+              <CaretDown size={11} className="text-muted-foreground shrink-0 ml-1" />
             </button>
 
             {docDropdownOpen && (
@@ -115,8 +115,8 @@ export function Navbar({
                   className="fixed inset-0 z-40"
                   onClick={() => setDocDropdownOpen(false)}
                 />
-                <div className="absolute left-0 top-10 z-50 bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl py-1.5 text-xs w-[340px] max-w-[90vw] ring-1 ring-black/10 dark:ring-white/10" role="listbox" aria-label="Available documents">
-                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/50 mb-1">
+                <div className="absolute left-0 top-9.5 z-50 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl py-1.5 text-xs w-[340px] max-w-[90vw] ring-1 ring-black/5 dark:ring-white/10" role="listbox" aria-label="Available documents">
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase text-muted-foreground tracking-wider border-b border-border/50 mb-1">
                     Select Document
                   </div>
                   {availableDocs.map((doc) => (
@@ -126,8 +126,8 @@ export function Navbar({
                         onSelectDoc(doc.id);
                         setDocDropdownOpen(false);
                       }}
-                      className={`w-full px-3 py-2 text-left flex items-start gap-2 hover:bg-secondary transition-colors cursor-pointer ${
-                        doc.id === currentDoc.id ? 'bg-accent/10 font-semibold text-emerald-800 dark:text-emerald-300' : ''
+                      className={`w-full px-3 py-2 text-left flex items-start gap-2 hover:bg-secondary/80 transition-colors cursor-pointer ${
+                        doc.id === currentDoc.id ? 'bg-secondary font-medium text-foreground' : ''
                       }`}
                     >
                       <FileText size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
@@ -138,7 +138,7 @@ export function Navbar({
                         </div>
                       </div>
                       {doc.id === currentDoc.id && (
-                        <CheckCircle size={14} className="ml-auto mt-0.5 text-emerald-600 shrink-0" weight="fill" />
+                        <CheckCircle size={14} className="ml-auto mt-0.5 text-foreground shrink-0" weight="fill" />
                       )}
                     </button>
                   ))}
@@ -149,7 +149,7 @@ export function Navbar({
                         setDocDropdownOpen(false);
                         onOpenUpload();
                       }}
-                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-secondary text-primary font-medium cursor-pointer"
+                      className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-secondary/80 text-foreground font-medium cursor-pointer"
                     >
                       <UploadSimple size={14} />
                       Upload Custom Contract (PDF)...
@@ -161,12 +161,12 @@ export function Navbar({
           </div>
 
           {/* Mode Tabs: Workstation vs Comparison */}
-          <div className="flex bg-secondary p-0.5 rounded-md border border-border shrink-0">
+          <div className="flex bg-secondary/80 p-0.5 rounded-lg border border-border/70 shrink-0">
             <button
               onClick={() => onSelectMode('workstation')}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
                 activeMode === 'workstation'
-                  ? 'bg-card text-foreground shadow-xs font-semibold'
+                  ? 'bg-card text-foreground shadow-2xs font-medium'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -174,9 +174,9 @@ export function Navbar({
             </button>
             <button
               onClick={() => onSelectMode('comparison')}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 cursor-pointer ${
                 activeMode === 'comparison'
-                  ? 'bg-card text-foreground shadow-xs font-semibold'
+                  ? 'bg-card text-foreground shadow-2xs font-medium'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -192,7 +192,7 @@ export function Navbar({
           {onOpenExport && (
             <button
               onClick={onOpenExport}
-              className="h-8.5 px-2.5 sm:px-3 rounded-md border border-border bg-secondary hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="h-8 px-2.5 sm:px-3 rounded-lg border border-border/80 bg-secondary/60 hover:bg-secondary text-foreground text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
               title="Export Executive Legal Audit Brief"
             >
               <DownloadSimple size={14} />
@@ -203,7 +203,7 @@ export function Navbar({
 
           <button
             onClick={onOpenUpload}
-            className="h-8.5 px-2.5 sm:px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            className="h-8 px-2.5 sm:px-3 rounded-lg bg-foreground text-background hover:opacity-90 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
           >
             <UploadSimple size={14} weight="bold" />
             <span className="hidden sm:inline">Upload PDF</span>
@@ -211,23 +211,23 @@ export function Navbar({
 
           <button
             onClick={onOpenSettings}
-            className={`h-8.5 px-2 sm:px-2.5 rounded-md border text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`h-8 px-2 sm:px-2.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               apiKeySet
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                : 'border-border bg-secondary hover:bg-muted text-foreground'
+                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                : 'border-border/80 bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground'
             }`}
             title="Configure Gemini API Settings"
           >
-            <Sparkle size={14} className={apiKeySet ? 'text-emerald-500' : 'text-muted-foreground'} />
-            <span className="hidden sm:inline">{apiKeySet ? 'Gemini Active' : 'AI Engine'}</span>
+            <Sparkle size={13} className={apiKeySet ? 'text-emerald-500' : 'text-muted-foreground'} />
+            <span className="hidden sm:inline">{apiKeySet ? 'Gemini 3.8' : 'AI Engine'}</span>
           </button>
 
           <button
             onClick={toggleTheme}
-            className="h-8.5 w-8.5 rounded-md border border-border bg-secondary hover:bg-muted text-foreground flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="h-8 w-8 rounded-lg border border-border/80 bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center transition-all cursor-pointer shrink-0"
             aria-label="Toggle Theme"
           >
-            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
         </div>
       </div>

@@ -143,19 +143,19 @@ export function MultilingualExplainer({ document, apiKey }: MultilingualExplaine
     <div className="p-4 sm:p-5 space-y-5 overflow-y-auto h-full">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-          <Translate size={18} className="text-primary" />
-          <span>Multilingual Legal Accessibility Engine</span>
+        <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
+          <Translate size={16} className="text-foreground" />
+          <span>Multilingual Legal Accessibility</span>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Legal terminology often disenfranchises non-native speakers. Translate and break down complex contractual restrictions into natural, plain language.
+          Translate and break down restrictive contractual covenants into plain, natural language for non-native speakers.
         </p>
       </div>
 
       {/* Language Selector Tabs */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Select Explanatory Language:
+        <label className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Select Explanatory Language
         </label>
         <div className="flex flex-wrap gap-1.5">
           {SUPPORTED_LANGUAGES.map((lang) => (
@@ -165,10 +165,10 @@ export function MultilingualExplainer({ document, apiKey }: MultilingualExplaine
                 setSelectedLanguage(lang.id);
                 handleTranslate(lang.id, clauseText);
               }}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-full border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
                 selectedLanguage === lang.id
-                  ? 'bg-primary text-primary-foreground border-primary shadow-xs'
-                  : 'bg-card text-card-foreground border-border hover:bg-secondary'
+                  ? 'bg-secondary text-foreground border-foreground/30 ring-1 ring-foreground/15 shadow-2xs'
+                  : 'bg-card text-muted-foreground hover:text-foreground border-border/80 hover:bg-secondary/40'
               }`}
             >
               <span>{lang.flag}</span>
@@ -180,8 +180,8 @@ export function MultilingualExplainer({ document, apiKey }: MultilingualExplaine
 
       {/* Preset Clauses Buttons */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Select Key Clause from Document:
+        <label className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Select Key Clause from Document
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
           {presetClauses.map((preset, i) => (
@@ -192,10 +192,10 @@ export function MultilingualExplainer({ document, apiKey }: MultilingualExplaine
                 setClauseText(preset.text);
                 handleTranslate(selectedLanguage, preset.text);
               }}
-              className="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-left text-xs font-medium text-foreground transition-colors cursor-pointer truncate"
+              className="p-2.5 rounded-xl border border-border/80 bg-card hover:bg-secondary/40 text-left text-xs font-medium text-foreground transition-all cursor-pointer truncate shadow-2xs"
             >
-              <div className="truncate font-semibold text-primary">{preset.title}</div>
-              <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+              <div className="truncate font-medium text-foreground tracking-tight">{preset.title}</div>
+              <div className="text-[10px] text-muted-foreground truncate mt-0.5 font-normal">
                 {preset.text}
               </div>
             </button>
@@ -205,21 +205,21 @@ export function MultilingualExplainer({ document, apiKey }: MultilingualExplaine
 
       {/* Editable Legal Text Input */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Legal Clause Text:
+        <label className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Legal Clause Text
         </label>
         <textarea
           rows={3}
           value={clauseText}
           onChange={(e) => setClauseText(e.target.value)}
-          className="w-full p-2.5 text-xs rounded-lg bg-secondary/70 border border-border focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-serif leading-relaxed"
+          className="w-full p-3 text-xs rounded-xl bg-secondary/50 border border-border/80 focus:bg-background focus:border-foreground/30 focus:outline-none transition-all text-foreground font-serif leading-relaxed"
           placeholder="Paste or edit any contractual clause text..."
         />
         <div className="flex justify-end">
           <button
             onClick={() => handleTranslate()}
             disabled={loading || !clauseText.trim()}
-            className="px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            className="px-3.5 py-1.5 rounded-xl bg-foreground text-background hover:opacity-90 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 active:scale-[0.98]"
           >
             <Sparkle size={13} />
             <span>{loading ? 'Translating & Simplifying...' : 'Explain in Selected Language'}</span>
@@ -229,14 +229,14 @@ export function MultilingualExplainer({ document, apiKey }: MultilingualExplaine
 
       {/* Error State */}
       {translationError && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-700 dark:text-red-300 flex items-center justify-between gap-2">
+        <div className="p-3 rounded-xl bg-risk-high-bg border border-risk-high-border text-xs text-risk-high-text flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <WarningCircle size={15} weight="fill" className="shrink-0" />
             <span>{translationError}</span>
           </div>
           <button
             onClick={() => handleTranslate()}
-            className="shrink-0 px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-800 dark:text-red-200 font-medium flex items-center gap-1 cursor-pointer transition-colors"
+            className="shrink-0 px-2 py-1 rounded bg-secondary hover:bg-muted text-foreground font-medium flex items-center gap-1 cursor-pointer transition-colors"
           >
             <ArrowClockwise size={12} />
             Retry
@@ -246,36 +246,36 @@ export function MultilingualExplainer({ document, apiKey }: MultilingualExplaine
 
       {/* Result Display Box */}
       {explanation && (
-        <div className="p-4 rounded-xl bg-card border border-border shadow-xs space-y-3 animate-in fade-in">
+        <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-3 animate-in fade-in">
           <div className="flex items-center justify-between border-b border-border/60 pb-2">
-            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Translate size={15} className="text-emerald-600" />
+            <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+              <Translate size={14} className="text-foreground" />
               {selectedLanguage} Legal Breakdown
             </span>
             <button
               onClick={handleCopy}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs cursor-pointer"
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs cursor-pointer transition-colors"
             >
               {copied ? (
                 <>
-                  <Check size={13} className="text-emerald-600" />
+                  <Check size={12} className="text-emerald-500" />
                   <span>Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy size={13} />
+                  <Copy size={12} />
                   <span>Copy Translation</span>
                 </>
               )}
             </button>
           </div>
 
-          <div className="text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+          <div className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
             {explanation}
           </div>
 
-          <div className="p-2.5 rounded-lg bg-secondary/60 text-[11px] text-muted-foreground flex items-center gap-2">
-            <Info size={14} className="shrink-0 text-primary" />
+          <div className="p-2.5 rounded-lg bg-secondary/50 text-[11px] text-muted-foreground flex items-center gap-2">
+            <Info size={13} className="shrink-0 text-muted-foreground" />
             <span>
               Simplified explanation generated for accessibility. Translated legal terms should be cross-verified in official jurisdictional documents.
             </span>

@@ -142,33 +142,33 @@ export function InteractivePdfViewer({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col h-full bg-muted/40 border-r border-border select-text relative overflow-hidden"
+      className="flex flex-col h-full bg-background border-r border-border select-text relative overflow-hidden"
       onMouseUp={handleMouseUp}
     >
       {/* Viewer Header Toolbar */}
-      <div className="h-12 bg-card border-b border-border px-3 flex items-center justify-between gap-2 shrink-0 z-20 shadow-2xs">
+      <div className="h-11 bg-card border-b border-border px-3 flex items-center justify-between gap-2 shrink-0 z-20">
         {/* Left: Page Navigator */}
         <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage <= 1}
-            className="p-1.5 rounded hover:bg-secondary disabled:opacity-35 text-foreground cursor-pointer transition-colors"
+            className="p-1 rounded-md hover:bg-secondary disabled:opacity-30 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             title="Previous Page"
           >
-            <CaretLeft size={16} />
+            <CaretLeft size={14} />
           </button>
 
-          <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-secondary text-foreground">
+          <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-secondary/80 border border-border/60 text-foreground">
             Page {currentPage} of {document.numPages}
           </span>
 
           <button
             onClick={() => setCurrentPage((p) => Math.min(document.numPages, p + 1))}
             disabled={currentPage >= document.numPages}
-            className="p-1.5 rounded hover:bg-secondary disabled:opacity-35 text-foreground cursor-pointer transition-colors"
+            className="p-1 rounded-md hover:bg-secondary disabled:opacity-30 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             title="Next Page"
           >
-            <CaretRight size={16} />
+            <CaretRight size={14} />
           </button>
         </div>
 
@@ -181,11 +181,11 @@ export function InteractivePdfViewer({
               placeholder="Search in document..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-7.5 pl-8 pr-20 text-xs rounded-md bg-secondary/80 border border-border focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+              className="w-full h-7 pl-7.5 pr-20 text-xs rounded-md bg-secondary/70 hover:bg-secondary/90 focus:bg-background border border-border/70 focus:border-foreground/30 focus:outline-none transition-all text-foreground placeholder:text-muted-foreground"
             />
             {searchQuery.trim().length >= 2 && (
               <div className="absolute right-1.5 flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
-                <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                <span className="bg-secondary text-foreground px-1.5 py-0.5 rounded font-medium border border-border/60">
                   {totalMatches} {totalMatches === 1 ? 'match' : 'matches'}
                 </span>
                 {matchingPages.length > 1 && (
@@ -195,14 +195,14 @@ export function InteractivePdfViewer({
                       className="p-0.5 hover:text-foreground cursor-pointer"
                       title="Previous match page"
                     >
-                      <CaretLeft size={12} />
+                      <CaretLeft size={11} />
                     </button>
                     <button
                       onClick={handleNextMatch}
                       className="p-0.5 hover:text-foreground cursor-pointer"
                       title="Next match page"
                     >
-                      <CaretRight size={12} />
+                      <CaretRight size={11} />
                     </button>
                   </div>
                 )}
@@ -213,23 +213,23 @@ export function InteractivePdfViewer({
 
         {/* Right: Zoom & Raw PDF link */}
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center bg-secondary rounded border border-border">
+          <div className="flex items-center bg-secondary/80 rounded-md border border-border/70 p-0.5">
             <button
               onClick={() => setZoomLevel((z) => Math.max(75, z - 10))}
-              className="px-1.5 py-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              className="p-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
               title="Zoom Out"
             >
-              <ArrowsIn size={14} />
+              <ArrowsIn size={13} />
             </button>
             <span className="text-[11px] font-mono px-1.5 text-foreground font-medium">
               {zoomLevel}%
             </span>
             <button
               onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
-              className="px-1.5 py-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              className="p-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
               title="Zoom In"
             >
-              <ArrowsOut size={14} />
+              <ArrowsOut size={13} />
             </button>
           </div>
 
@@ -238,10 +238,10 @@ export function InteractivePdfViewer({
               href={document.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               title="Open raw PDF in new tab"
             >
-              <ArrowSquareOut size={15} />
+              <ArrowSquareOut size={14} />
             </a>
           )}
         </div>
@@ -249,17 +249,17 @@ export function InteractivePdfViewer({
 
       {/* Floating Citation Target Badge (when active) */}
       {activeCitation && (
-        <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-1.5 text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-2 z-10 shrink-0">
+        <div className="bg-secondary/90 backdrop-blur-md border-b border-border/80 px-4 py-1.5 text-xs text-foreground flex items-center justify-between gap-2 z-10 shrink-0">
           <div className="flex items-center gap-2 truncate">
-            <BookmarkSimple size={15} weight="fill" className="text-amber-600 dark:text-amber-400 shrink-0" />
-            <span className="font-semibold text-[11px] uppercase tracking-wider">
-              Visual Verification Active:
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <span className="font-semibold text-[11px] tracking-tight">
+              Grounded Citation:
             </span>
-            <span className="font-mono font-medium truncate">
+            <span className="font-mono text-muted-foreground truncate">
               {activeCitation.sectionNumber} (Page {activeCitation.pageNumber})
             </span>
           </div>
-          <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded font-mono shrink-0">
+          <span className="text-[10px] bg-card border border-border/80 text-foreground px-2 py-0.5 rounded-full font-mono shrink-0">
             Source Grounded
           </span>
         </div>
@@ -268,7 +268,7 @@ export function InteractivePdfViewer({
       {/* Selection Tooltip Action */}
       {selectedText && selectionCoord && (
         <div
-          className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 bg-primary text-primary-foreground text-xs rounded-lg px-2.5 py-1.5 shadow-lg flex items-center gap-1.5 cursor-pointer animate-in fade-in"
+          className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 bg-foreground text-background text-xs rounded-lg px-3 py-1.5 shadow-xl flex items-center gap-1.5 cursor-pointer animate-in fade-in"
           style={{ left: `${selectionCoord.x}px`, top: `${selectionCoord.y}px` }}
           onClick={handleAskSelection}
         >
@@ -293,10 +293,10 @@ export function InteractivePdfViewer({
                 width: `${Math.round(595 * (zoomLevel / 100))}px`,
                 minHeight: `${Math.round(842 * (zoomLevel / 100))}px`,
               }}
-              className={`bg-card text-card-foreground rounded-lg shadow-md border transition-all duration-300 relative flex flex-col ${
+              className={`bg-card text-card-foreground rounded-lg shadow-xs border transition-all duration-200 relative flex flex-col ${
                 isCitedPage
-                  ? 'ring-2 ring-amber-500/80 shadow-amber-500/10'
-                  : 'border-border'
+                  ? 'border-amber-500/50 ring-1 ring-amber-500/30'
+                  : 'border-border/80'
               }`}
             >
               {/* Top Page Header Bar */}
@@ -364,7 +364,7 @@ function renderFormattedPageText(
       return (
         <h3
           key={idx}
-          className="font-sans font-bold text-sm text-primary tracking-tight border-b border-border/60 pb-1 pt-2 uppercase"
+          className="font-sans font-semibold text-xs tracking-wider text-foreground border-b border-border/60 pb-1.5 pt-3 uppercase"
         >
           {highlightText(para.trim(), searchQuery)}
         </h3>
@@ -375,20 +375,20 @@ function renderFormattedPageText(
     return (
       <div
         key={idx}
-        className={`relative p-2 rounded transition-all duration-300 ${
+        className={`relative p-2.5 rounded-lg transition-all duration-200 ${
           isCitationTarget
-            ? 'citation-highlight-pulse bg-amber-500/20 border-l-4 border-amber-500 my-2'
-            : 'hover:bg-muted/30'
+            ? 'citation-highlight-pulse bg-amber-400/15 dark:bg-amber-400/10 border-l-2 border-amber-500 my-2 shadow-2xs'
+            : 'hover:bg-secondary/40'
         }`}
       >
         {isCitationTarget && (
-          <div className="mb-1 flex items-center gap-1.5 text-[10px] font-sans font-bold text-amber-900 dark:text-amber-200">
-            <Sparkle size={12} weight="fill" className="text-amber-600" />
-            MATCHED CLAUSE CITATION · {activeCitation?.sectionNumber}
+          <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-sans font-semibold tracking-wide text-amber-800 dark:text-amber-300">
+            <Sparkle size={11} weight="fill" className="text-amber-500" />
+            <span>VERIFIED CITATION · {activeCitation?.sectionNumber}</span>
           </div>
         )}
 
-        <p className="text-[13px] leading-relaxed">
+        <p className="text-[13px] leading-relaxed text-foreground/90">
           {highlightText(para.trim(), searchQuery)}
         </p>
       </div>

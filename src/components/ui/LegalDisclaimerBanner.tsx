@@ -9,14 +9,14 @@ export function LegalDisclaimerBanner() {
 
   if (dismissed) {
     return (
-      <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-1 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between">
+      <div className="bg-secondary/40 border-b border-border/60 px-4 py-1 text-[11px] text-muted-foreground flex items-center justify-between">
         <span className="flex items-center gap-1.5">
-          <Info size={14} className="text-amber-600 dark:text-amber-400" />
-          Assistive AI tool · Not formal legal advice
+          <Info size={13} className="text-muted-foreground" />
+          Assistive legal intelligence · Informational only, not formal legal counsel
         </span>
         <button
           onClick={() => setDismissed(false)}
-          className="underline hover:text-amber-900 dark:hover:text-amber-200 cursor-pointer text-[11px]"
+          className="text-foreground hover:underline cursor-pointer text-[11px] font-medium"
         >
           View Disclaimer
         </button>
@@ -27,21 +27,21 @@ export function LegalDisclaimerBanner() {
   return (
     <aside
       aria-label="Legal Assistance Disclaimer"
-      className="bg-amber-500/10 border-b border-amber-500/20 text-amber-900 dark:text-amber-200 px-4 py-2 text-xs transition-all"
+      className="bg-secondary/35 border-b border-border/60 text-muted-foreground px-4 py-1.5 text-xs transition-all"
     >
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2">
+      <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2">
         <div className="flex items-start md:items-center gap-2">
-          <ShieldCheck size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 md:mt-0" />
-          <div>
-            <span className="font-semibold text-amber-950 dark:text-amber-100 mr-1.5">
-              LEGAL ASSISTANCE & RESPONSIBLE AI NOTICE:
+          <ShieldCheck size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 md:mt-0" />
+          <div className="text-[11.5px] leading-relaxed">
+            <span className="font-semibold text-foreground mr-1.5 tracking-tight">
+              Responsible AI Advisory:
             </span>
             <span>
-              LegalPulse is an AI document assistant designed to enhance legal accessibility. Outputs are strictly informational and do not constitute formal legal advice or an attorney-client relationship.
+              LegalPulse is an AI document assistant designed to enhance legal accessibility. Outputs are strictly informational and do not constitute formal legal counsel.
             </span>
             {expanded && (
-              <p className="mt-2 text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
-                All identified risks, clauses, and suggested questions are generated from document text grounding. Enforceability of specific terms (e.g. non-compete covenants or training bonds) varies across jurisdictions (e.g., California Labor Code §16600, Section 27 of the Indian Contract Act). Always consult a qualified attorney for critical contractual commitments.
+              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground border-t border-border/50 pt-1.5">
+                All identified risks, clauses, and suggested questions are generated from grounded document text. Enforceability of specific terms (e.g. non-compete covenants or training bonds) varies across jurisdictions (e.g., California Labor Code §16600, Section 27 of the Indian Contract Act). Always consult a qualified attorney for critical contractual commitments.
               </p>
             )}
           </div>
@@ -50,16 +50,16 @@ export function LegalDisclaimerBanner() {
         <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-[11px] font-medium underline hover:text-amber-950 dark:hover:text-amber-100 cursor-pointer"
+            className="text-[11px] font-medium text-foreground hover:underline cursor-pointer"
           >
             {expanded ? 'Less info' : 'Learn more'}
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="p-1 text-amber-700 hover:text-amber-950 dark:text-amber-400 dark:hover:text-amber-100 rounded cursor-pointer"
+            className="p-0.5 text-muted-foreground hover:text-foreground rounded cursor-pointer transition-colors"
             aria-label="Dismiss disclaimer"
           >
-            <X size={14} />
+            <X size={13} />
           </button>
         </div>
       </div>

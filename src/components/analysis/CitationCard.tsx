@@ -17,18 +17,18 @@ export function CitationCard({ citation, onJumpToPdf, isActive }: CitationCardPr
   return (
     <div
       onClick={() => onJumpToPdf(citation)}
-      className={`p-3 rounded-lg border text-xs transition-all duration-200 cursor-pointer ${
+      className={`p-3 rounded-xl border text-xs transition-all duration-150 cursor-pointer ${
         isActive
-          ? 'bg-amber-500/10 border-amber-500 shadow-xs'
-          : 'bg-secondary/50 hover:bg-secondary border-border'
+          ? 'bg-amber-400/10 dark:bg-amber-400/5 border-amber-500/60 ring-1 ring-amber-500/30 shadow-2xs'
+          : 'bg-card hover:bg-secondary/50 border-border/80 shadow-2xs hover:border-foreground/20'
       }`}
     >
       <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5 font-mono text-[11px] font-semibold text-foreground">
+        <div className="flex items-center gap-1.5 font-mono text-[11px] font-medium text-foreground">
           <BookmarkSimple
-            size={14}
+            size={13}
             weight={isActive ? 'fill' : 'bold'}
-            className={isActive ? 'text-amber-600' : 'text-primary'}
+            className={isActive ? 'text-amber-500' : 'text-muted-foreground'}
           />
           <span>{citation.sectionNumber}</span>
           <span className="text-muted-foreground">·</span>
@@ -37,23 +37,23 @@ export function CitationCard({ citation, onJumpToPdf, isActive }: CitationCardPr
 
         {citation.riskLevel && (
           <span
-            className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${
+            className={`text-[9.5px] font-medium tracking-wide uppercase px-2 py-0.5 rounded-full border flex items-center gap-1 ${
               isHighRisk
-                ? 'bg-red-500/15 text-red-700 dark:text-red-300'
+                ? 'bg-risk-high-bg text-risk-high-text border-risk-high-border'
                 : isMediumRisk
-                ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300'
-                : 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300'
+                ? 'bg-risk-medium-bg text-risk-medium-text border-risk-medium-border'
+                : 'bg-risk-low-bg text-risk-low-text border-risk-low-border'
             }`}
           >
-            {isHighRisk && <ShieldWarning size={11} weight="fill" />}
-            {isMediumRisk && <Warning size={11} weight="fill" />}
-            {!isHighRisk && !isMediumRisk && <CheckCircle size={11} weight="fill" />}
+            {isHighRisk && <ShieldWarning size={10} weight="fill" />}
+            {isMediumRisk && <Warning size={10} weight="fill" />}
+            {!isHighRisk && !isMediumRisk && <CheckCircle size={10} weight="fill" />}
             {citation.riskLevel} Risk
           </span>
         )}
       </div>
 
-      <blockquote className="border-l-2 border-primary/30 pl-2.5 my-1.5 italic text-foreground/80 font-serif leading-relaxed line-clamp-3">
+      <blockquote className="border-l-2 border-border pl-2.5 my-1.5 italic text-foreground/80 font-serif text-[12px] leading-relaxed line-clamp-3">
         &ldquo;{citation.quote}&rdquo;
       </blockquote>
 
@@ -63,10 +63,10 @@ export function CitationCard({ citation, onJumpToPdf, isActive }: CitationCardPr
         </p>
       )}
 
-      <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-primary font-medium">
+      <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-foreground font-medium">
         <span className="flex items-center gap-1 hover:underline">
           Verify in PDF Viewer
-          <ArrowRight size={11} />
+          <ArrowRight size={10} />
         </span>
         <span className="text-muted-foreground font-mono">
           Click to Ground
