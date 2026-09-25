@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Citation, DocumentClause, LegalDocument, QuickActionId, QuickActionResult, RiskLevel } from './types';
+import { Citation, DocumentClause, LegalDocument, QuickActionId, QuickActionResult } from './types';
 
 // The system prompt strictly enforcing grounding, zero-hallucination, and exact visual citations
 export const LEGAL_SYSTEM_PROMPT = `You are LegalPulse AI, an elite legal intelligence assistant specializing in contract analysis, risk assessment, and clause grounding.

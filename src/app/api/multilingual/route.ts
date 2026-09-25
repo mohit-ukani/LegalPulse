@@ -1,16 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGeminiClient } from '@/lib/gemini-client';
+import {
+  queryRateLimiter,
+  detectPromptInjection,
+  sanitizeLegalInput,
+} from '@/lib/security';
+import { translationCache, generateCacheKey } from '@/lib/cache';
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Sliding-Window Rate Limiting
+    const clientIp = req.headers.get('x-forwarded-for') || 'local-client';
+    const rateCheck = queryRateLimiter.check(clientIp);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Please wait a moment before requesting another translation.',
+          retryAfterMs: rateCheck.resetInMs,
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
-    const { text, targetLanguage, clauseTitle, apiKey } = body;
+    const { text: rawText, targetLanguage: rawLang, clauseTitle: rawTitle, apiKey } = body;
+
+    const text = sanitizeLegalInput(rawText, 4000);
+    const targetLanguage = sanitizeLegalInput(rawLang, 50);
+    const clauseTitle = sanitizeLegalInput(rawTitle, 120);
 
     if (!text || !targetLanguage) {
       return NextResponse.json(
-        { error: 'Text and targetLanguage are required' },
+        { error: 'Valid text and targetLanguage are required' },
         { status: 400 }
       );
+    }
+
+    // 2. Prompt Injection Defense
+    const injectionCheck = detectPromptInjection(`${clauseTitle} ${text}`);
+    if (!injectionCheck.isSafe) {
+      return NextResponse.json(
+        {
+          error: 'Text rejected: Detected potential prompt injection pattern.',
+          threatDetected: injectionCheck.threatDetected,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 3. Efficiency Cache Lookup
+    const cacheKey = generateCacheKey('multilingual', {
+      textHash: text.slice(0, 100),
+      lang: targetLanguage.toLowerCase().trim(),
+    });
+
+    const cached = translationCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json({
+        ...cached,
+        cached: true,
+      });
     }
 
     const genAI = getGeminiClient(apiKey);
@@ -39,11 +88,17 @@ REQUIREMENTS:
         const result = await model.generateContent(prompt);
         const explanation = result.response.text();
 
-        return NextResponse.json({
+        const responsePayload = {
           success: true,
           targetLanguage,
           explanation,
-        });
+          cached: false,
+          modelUsed: 'gemini-3.8-flash',
+        };
+
+        translationCache.set(cacheKey, responsePayload);
+
+        return NextResponse.json(responsePayload);
       } catch (err) {
         console.warn('Gemini multilingual error, falling back to dictionary explainer:', err);
       }
@@ -71,7 +126,7 @@ Esta cláusula establece las condiciones y restricciones clave de su contrato.
       explanation = `### Explication en Français Simple (${clauseTitle || 'Clause Juridique'}):
 Cette clause définit les obligations clés et les restrictions de votre contrat de travail.
 
-- **En termes simples**: ${text.slice(0, 300)}...
+- **En terms simples**: ${text.slice(0, 300)}...
 - **Avertissement important**: En cas de démission anticipée, l'employeur peut réclamer des pénalités ou retenir des indemnités.
 - **Conseil**: Consultez un conseiller juridique avant de signer.`;
     } else if (lang.includes('german') || lang.includes('deutsch')) {
@@ -90,17 +145,20 @@ Here is what this legal clause actually means in straightforward terms:
 - **Action Step**: Confirm that all oral promises from interview discussions are reflected in the signed text.`;
     }
 
-    return NextResponse.json({
+    const fallbackPayload = {
       success: true,
       targetLanguage,
       explanation,
-    });
+      cached: false,
+      modelUsed: 'offline-dictionary-fallback',
+    };
+
+    translationCache.set(cacheKey, fallbackPayload);
+
+    return NextResponse.json(fallbackPayload);
   } catch (error: unknown) {
     console.error('API /api/multilingual error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Multilingual explanation failed';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

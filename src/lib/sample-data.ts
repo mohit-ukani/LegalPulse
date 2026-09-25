@@ -1,4 +1,4 @@
-import { LegalDocument, QuickActionItem, QuickActionResult, RiskAnalysisReport, ContractComparisonResult } from './types';
+import { LegalDocument, QuickActionItem, RiskAnalysisReport, ContractComparisonResult } from './types';
 
 export const QUICK_ACTIONS: QuickActionItem[] = [
   {

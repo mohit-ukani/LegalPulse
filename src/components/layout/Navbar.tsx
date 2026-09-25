@@ -5,7 +5,6 @@ import {
   Scales,
   UploadSimple,
   GitDiff,
-  Gear,
   Sun,
   Moon,
   CheckCircle,

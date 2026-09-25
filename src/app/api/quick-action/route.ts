@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuickAction } from '@/lib/gemini-client';
 import { LegalDocument, QuickActionId } from '@/lib/types';
 import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
+import { queryRateLimiter } from '@/lib/security';
+import { analysisCache, generateCacheKey } from '@/lib/cache';
 
 const VALID_ACTION_IDS: QuickActionId[] = [
   'notice_period',
@@ -17,6 +19,19 @@ const VALID_ACTION_IDS: QuickActionId[] = [
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Sliding-Window Rate Limiting
+    const clientIp = req.headers.get('x-forwarded-for') || 'local-client';
+    const rateCheck = queryRateLimiter.check(clientIp);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Please wait a moment before sending another query.',
+          retryAfterMs: rateCheck.resetInMs,
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { actionId, documentId, customDoc, apiKey } = body;
 
@@ -40,21 +55,41 @@ export async function POST(req: NextRequest) {
       doc = SAMPLE_DOC_A;
     }
 
+    // 2. Efficiency Cache Lookup
+    const cacheKey = generateCacheKey('quick-action', {
+      actionId,
+      docId: doc.id,
+      pagesCount: doc.pages?.length || 0,
+    });
+
+    const cached = analysisCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json({
+        ...cached,
+        cached: true,
+      });
+    }
+
     const result = executeQuickAction(actionId as QuickActionId, doc);
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       result,
       documentId: doc.id,
       documentTitle: doc.title,
-      modelUsed: process.env.GEMINI_API_KEY || apiKey ? 'Gemini 1.5 Flash (Grounded)' : 'LegalPulse Grounded Neural RAG',
-    });
+      cached: false,
+      modelUsed:
+        process.env.GEMINI_API_KEY || apiKey
+          ? 'Gemini 3.8 Flash (Grounded)'
+          : 'LegalPulse Grounded Neural RAG',
+    };
+
+    analysisCache.set(cacheKey, responsePayload);
+
+    return NextResponse.json(responsePayload);
   } catch (error: unknown) {
     console.error('API /api/quick-action error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Action failed';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -76,6 +76,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     localStorage.removeItem('legalpulse_gemini_key');
                     localStorage.removeItem('legalpulse_custom_docs');
                     localStorage.removeItem('legalpulse_sidebar_open');
+                    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
                     window.location.href = '/';
                   }
                 }}

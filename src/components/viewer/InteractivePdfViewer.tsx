@@ -8,8 +8,6 @@ import {
   ArrowsOut,
   ArrowsIn,
   FileText,
-  BookmarkSimple,
-  ShieldWarning,
   Sparkle,
   ArrowSquareOut,
   ChatText,
@@ -140,7 +138,6 @@ export function InteractivePdfViewer({
     }
   };
 
-  const activePageData = document.pages.find((p) => p.pageNumber === currentPage) || document.pages[0];
 
   return (
     <div
@@ -294,7 +291,6 @@ export function InteractivePdfViewer({
       {/* Document Pages Container */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 flex flex-col items-center">
         {document.pages.map((page) => {
-          const isCurrentPage = page.pageNumber === currentPage;
           const isCitedPage = activeCitation?.pageNumber === page.pageNumber;
 
           return (

@@ -5,19 +5,17 @@ import {
   GitDiff,
   ShieldCheck,
   CheckCircle,
-  WarningCircle,
-  ArrowRight,
   Sparkle,
   PlusCircle,
   MinusCircle,
   BookmarkSimple,
 } from '@phosphor-icons/react';
-import { ContractComparisonResult, ContractDifference } from '@/lib/types';
+import { ContractComparisonResult } from '@/lib/types';
 import { SAMPLE_COMPARISON, SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
 
 interface ComparisonWorkspaceProps {
   onBackToWorkstation: () => void;
-  onSelectDoc: (docId: string) => void;
+  onSelectDoc?: (docId: string) => void;
   apiKey?: string;
 }
 
@@ -88,6 +86,22 @@ export function ComparisonWorkspace({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {onSelectDoc && (
+              <>
+                <button
+                  onClick={() => onSelectDoc(comparison.docAId)}
+                  className="px-2.5 py-1.5 rounded-lg border border-border/80 bg-card hover:bg-secondary text-xs font-medium text-foreground transition-all cursor-pointer shadow-2xs"
+                >
+                  View V1 in Workstation
+                </button>
+                <button
+                  onClick={() => onSelectDoc(comparison.docBId)}
+                  className="px-2.5 py-1.5 rounded-lg border border-border/80 bg-card hover:bg-secondary text-xs font-medium text-foreground transition-all cursor-pointer shadow-2xs"
+                >
+                  View V2 in Workstation
+                </button>
+              </>
+            )}
             <button
               onClick={onBackToWorkstation}
               className="px-3 py-1.5 rounded-lg border border-border/80 bg-secondary/70 hover:bg-secondary text-xs font-medium text-foreground transition-all cursor-pointer shadow-2xs"

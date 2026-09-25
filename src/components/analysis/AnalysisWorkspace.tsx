@@ -56,7 +56,9 @@ export function AnalysisWorkspace({
   }, [externalPrompt]);
 
   const onCitationClickRef = React.useRef(onCitationClick);
-  onCitationClickRef.current = onCitationClick;
+  React.useEffect(() => {
+    onCitationClickRef.current = onCitationClick;
+  }, [onCitationClick]);
 
   const handleSelectQuickAction = React.useCallback(async (actionId: QuickActionId) => {
     setActiveActionId(actionId);

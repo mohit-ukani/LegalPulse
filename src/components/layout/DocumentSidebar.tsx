@@ -6,12 +6,8 @@ import {
   Plus,
   FileText,
   TrashSimple,
-  CheckCircle,
-  Sparkle,
   Gear,
   UploadSimple,
-  ShieldWarning,
-  X,
 } from '@phosphor-icons/react';
 import { LegalDocument } from '@/lib/types';
 import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';

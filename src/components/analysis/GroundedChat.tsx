@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   PaperPlaneRight,
   Sparkle,
-  User,
   WarningCircle,
   Copy,
   Check,
@@ -42,7 +41,7 @@ export function GroundedChat({
     id: 'welcome',
     role: 'assistant',
     content: `Welcome to **LegalPulse Grounded Analysis** for **${docTitle}**. Ask any question regarding your obligations, risks, notice periods, or compensation. Every answer will be grounded with clickable page and clause citations directly linked to the PDF on your left.`,
-    timestamp: Date.now(),
+    timestamp: 0,
     suggestedQuestions: [
       'What are the highest risk clauses in this document?',
       'What is the notice period and is there a buyout right?',
@@ -58,28 +57,6 @@ export function GroundedChat({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastPromptTimestampRef = useRef<number | null>(null);
-
-  // Reset messages when document changes
-  useEffect(() => {
-    setMessages([makeWelcomeMessage(document.title)]);
-    lastPromptTimestampRef.current = null;
-  }, [document.id]);
-
-  // Auto-scroll chat
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
-  // Handle external prompt injection (e.g. from PDF text selection or quick chips)
-  useEffect(() => {
-    if (!externalPrompt) return;
-    if (typeof externalPrompt === 'string') {
-      handleSend(externalPrompt);
-    } else if (externalPrompt.timestamp !== lastPromptTimestampRef.current) {
-      lastPromptTimestampRef.current = externalPrompt.timestamp;
-      handleSend(externalPrompt.text);
-    }
-  }, [externalPrompt]);
 
   const handleSend = async (queryToSend?: string) => {
     const query = queryToSend || inputQuery;
@@ -153,6 +130,30 @@ export function GroundedChat({
       setLoading(false);
     }
   };
+
+  // Reset messages when document changes
+  useEffect(() => {
+    setMessages([makeWelcomeMessage(document.title)]);
+    lastPromptTimestampRef.current = null;
+  }, [document.id, document.title]);
+
+  // Auto-scroll chat
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  // Handle external prompt injection (e.g. from PDF text selection or quick chips)
+  useEffect(() => {
+    if (!externalPrompt) return;
+    if (typeof externalPrompt === 'string') {
+      handleSend(externalPrompt);
+    } else if (externalPrompt.timestamp !== lastPromptTimestampRef.current) {
+      lastPromptTimestampRef.current = externalPrompt.timestamp;
+      handleSend(externalPrompt.text);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalPrompt]);
+
 
   const copyForLawyer = (content: string, id: string) => {
     const textToCopy = `[Legal Question for Legal Counsel generated via LegalPulse]\n\n${content}`;

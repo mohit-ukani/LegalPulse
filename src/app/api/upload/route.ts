@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DocumentClause, DocumentPage, LegalDocument } from '@/lib/types';
+import { uploadRateLimiter, verifyPdfMagicBytes, sanitizeFileName } from '@/lib/security';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
 
+const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB limit
+
 export async function POST(req: NextRequest) {
   try {
+    // 1. Upload Rate Limiting
+    const clientIp = req.headers.get('x-forwarded-for') || 'local-client';
+    const rateCheck = uploadRateLimiter.check(clientIp);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Upload rate limit exceeded. Please wait a minute before uploading another document.',
+          retryAfterMs: rateCheck.resetInMs,
+        },
+        { status: 429 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
@@ -14,15 +30,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No PDF file uploaded' }, { status: 400 });
     }
 
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    // 2. Strict File Size Boundary
+    if (file.size > MAX_FILE_SIZE_BYTES) {
       return NextResponse.json(
-        { error: 'Invalid file format. Please upload a PDF legal document.' },
+        { error: 'File size exceeds maximum allowed limit of 15MB.' },
+        { status: 400 }
+      );
+    }
+
+    // 3. Filename Sanitization against Directory Traversal
+    const safeFilename = sanitizeFileName(file.name);
+
+    if (!safeFilename.toLowerCase().endsWith('.pdf')) {
+      return NextResponse.json(
+        { error: 'Invalid file format. Only PDF files are supported.' },
         { status: 400 }
       );
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    // 4. Magic-Byte Verification (Ensures file is actually a PDF and not a polyglot executable)
+    if (!verifyPdfMagicBytes(buffer)) {
+      return NextResponse.json(
+        { error: 'Security validation failed: File does not contain valid PDF binary header.' },
+        { status: 400 }
+      );
+    }
 
     // Parse PDF text
     const pdfData = await pdfParse(buffer);
@@ -108,8 +143,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Infer document title from filename or first line
-    const cleanTitle = file.name
+    // Infer document title from sanitized filename
+    const cleanTitle = safeFilename
       .replace(/\.pdf$/i, '')
       .replace(/[-_]/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -118,18 +153,18 @@ export async function POST(req: NextRequest) {
     const newDoc: LegalDocument = {
       id: docId,
       title: cleanTitle,
-      filename: file.name,
+      filename: safeFilename,
       numPages: pages.length,
       uploadedAt: new Date().toISOString(),
-      documentType: /employment|hire|offer/i.test(file.name)
+      documentType: /employment|hire|offer/i.test(safeFilename)
         ? 'employment'
-        : /vendor|service|msa/i.test(file.name)
+        : /vendor|service|msa/i.test(safeFilename)
         ? 'vendor'
-        : /terms|privacy|eula/i.test(file.name)
+        : /terms|privacy|eula/i.test(safeFilename)
         ? 'terms'
         : 'general',
       parties: ['Contracting Party A', 'Contracting Party B'],
-      summary: `Uploaded legal document "${file.name}" comprising ${pages.length} pages. Successfully indexed for grounded legal analysis and clause citation.`,
+      summary: `Uploaded legal document "${safeFilename}" comprising ${pages.length} pages. Successfully indexed for grounded legal analysis and clause citation.`,
       pages,
     };
 
@@ -140,9 +175,6 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error('API /api/upload error:', error);
     const errorMessage = error instanceof Error ? error.message : 'PDF upload parsing failed';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
