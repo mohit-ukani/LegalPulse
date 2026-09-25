@@ -53,7 +53,7 @@ export async function queryDocumentWithGemini(
   if (genAI) {
     try {
       const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.8-flash',
         systemInstruction: LEGAL_SYSTEM_PROMPT,
         generationConfig: {
           temperature: 0.1,

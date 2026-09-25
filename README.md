@@ -67,7 +67,7 @@ Legal agreements (employment contracts, NDAs, Master Service Agreements, SaaS te
 ```
 
 ### Google Cloud & Gemini Integration:
-- **Model**: `gemini-1.5-flash` with strict grounding system instructions and structured JSON output.
+- **Model**: `gemini-3.8-flash` with strict grounding system instructions and structured JSON output.
 - **RAG Pipeline**: Fine-grained chunking with page number and section metadata sent as contextual grounding.
 - **Multilingual**: Gemini-powered clause translation with contextual legal simplification.
 - **Deployment**: Native containerization for **Google Cloud Run** (`Dockerfile`, `cloudbuild.yaml`, `.gcloudignore`).

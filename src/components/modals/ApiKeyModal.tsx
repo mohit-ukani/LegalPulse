@@ -75,10 +75,10 @@ export function ApiKeyModal({
             High-Speed RAG & Structured Schema Engine
           </div>
           <p className="text-muted-foreground leading-relaxed text-[11px]">
-            LegalPulse utilizes <strong>Gemini 2.5 Flash</strong> with temperature 0.1 and strict system constraints to extract visual page citations and prevent hallucinations.
+            LegalPulse utilizes <strong>Gemini 3.8 Flash</strong> with temperature 0.1 and strict system constraints to extract visual page citations and prevent hallucinations.
           </p>
           <div className="text-[10px] text-emerald-700 dark:text-emerald-300 font-mono">
-            Model: gemini-2.5-flash · Grounded Schema Active
+            Model: gemini-3.8-flash · Grounded Schema Active
           </div>
         </div>
 
