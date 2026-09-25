@@ -1,9 +1,9 @@
 # LegalPulse — AI for Legal Assistance & Access
 
 > **PromptWars Competition Entry: "AI for Legal Assistance and Access"**  
-> An intelligent legal workstation powered by **Google Gemini 1.5 Flash**, featuring interactive visual citation grounding, one-click guided workflows, contract-vs-contract comparison, multilingual legal accessibility, and dynamic risk assessment.
+> An intelligent legal workstation powered by **Google Gemini 3.8 Flash**, featuring interactive visual citation grounding, one-click guided workflows, contract-vs-contract comparison, multilingual legal accessibility, and dynamic risk assessment.
 
-[![Google Gemini 1.5 Flash](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
+[![Google Gemini 3.8 Flash](https://img.shields.io/badge/Google%20Gemini-3.8%20Flash-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16%20App%20Router-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Google Cloud Run Ready](https://img.shields.io/badge/Google%20Cloud-Run%20Ready-34A853?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
@@ -59,7 +59,7 @@ Legal agreements (employment contracts, NDAs, Master Service Agreements, SaaS te
                                       │
               ┌───────────────────────┴───────────────────────┐
               ▼                                               ▼
-   Google Gemini 1.5 Flash                     Local Deterministic Engine
+   Google Gemini 3.8 Flash                     Local Deterministic Engine
   • Temperature 0.1                            • Offline Evaluation Safeguard
   • Strict Grounding System Prompt             • Sample Contracts & Verification
   • Structured JSON Schemas                    • In-Memory Ephemeral Storage
@@ -89,7 +89,7 @@ Nine pre-built legal analysis chips covering the most critical contract review n
 - **Indemnification** — Liability caps, mutual vs. unilateral indemnity
 
 ### 4.2 Grounded Q&A Chat
-- Full conversational interface with **contextual RAG** powered by Gemini 1.5 Flash
+- Full conversational interface with **contextual RAG** powered by Gemini 3.8 Flash
 - Every response includes **clickable visual citations** linked to exact PDF pages
 - **"Copy for Lawyer"** button on every AI response for professional handoff
 - **Zero-hallucination guarantee**: Explicitly flags when information is absent
@@ -228,7 +228,7 @@ gcloud run deploy legal-pulse \
 - [x] **Mitigation of Hallucinations**: Explicitly states when requested information is absent.
 - [x] **Clean Software Engineering**: Next.js 16 App Router, TypeScript, modular components, zero exposed secrets.
 - [x] **Responsible Legal Disclaimers**: Integrated disclaimer alerts on all outputs.
-- [x] **Google Ecosystem Integration**: Gemini 1.5 Flash + Cloud Run deployment configuration.
+- [x] **Google Ecosystem Integration**: Gemini 3.8 Flash + Cloud Run deployment configuration.
 - [x] **Click Optimization**: Entire primary workflow completed in under 10 clicks (< 40 limit).
 - [x] **Offline Resilience**: Built-in grounded neural engine guarantees the app never fails outside local setups.
 - [x] **Accessibility**: ARIA roles, keyboard navigation, `prefers-reduced-motion`, dark mode with system preference detection.
