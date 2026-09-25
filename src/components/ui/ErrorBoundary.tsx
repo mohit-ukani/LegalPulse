@@ -74,6 +74,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     localStorage.removeItem('legalpulse_gemini_key');
+                    localStorage.removeItem('legalpulse_custom_docs');
+                    localStorage.removeItem('legalpulse_sidebar_open');
                     window.location.href = '/';
                   }
                 }}

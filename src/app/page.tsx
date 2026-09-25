@@ -14,6 +14,7 @@ import { ApiKeyModal } from '@/components/modals/ApiKeyModal';
 import { ExportReportModal } from '@/components/modals/ExportReportModal';
 import { DeleteDocumentModal } from '@/components/modals/DeleteDocumentModal';
 import { DocumentSidebar } from '@/components/layout/DocumentSidebar';
+import { EmptyWorkspace } from '@/components/ui/EmptyWorkspace';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export default function Home() {
@@ -64,16 +65,18 @@ export default function Home() {
     }, 3500);
   };
 
-  const currentDoc = documents.find((d) => d.id === currentDocId) || documents[0];
+  const currentDoc = documents.find((d) => d.id === currentDocId) || documents[0] || null;
 
   // Dynamic document title update based on mode and active document
   useEffect(() => {
     if (typeof document !== 'undefined') {
       if (activeMode === 'comparison') {
         document.title = 'Contract Diff & Risk Delta | LegalPulse';
-      } else {
-        const shortTitle = currentDoc?.title?.split('—')[0]?.trim() || 'Document';
+      } else if (currentDoc) {
+        const shortTitle = currentDoc.title?.split('—')[0]?.trim() || 'Document';
         document.title = `${shortTitle} | LegalPulse AI Workstation`;
+      } else {
+        document.title = 'LegalPulse Studio — No Documents Open';
       }
     }
   }, [activeMode, currentDoc]);
@@ -229,6 +232,12 @@ export default function Home() {
                 setActiveMode('workstation');
               }}
               apiKey={apiKey}
+            />
+          ) : !currentDoc ? (
+            /* Zero-Document Clean Empty State */
+            <EmptyWorkspace
+              onOpenUpload={() => setUploadModalOpen(true)}
+              onRestoreSamples={handleResetSamples}
             />
           ) : (
             /* Mode 1: Split-Screen Legal Workstation */

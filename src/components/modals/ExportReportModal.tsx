@@ -19,7 +19,7 @@ import { SAMPLE_RISK_REPORT_A } from '@/lib/sample-data';
 interface ExportReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  document: LegalDocument;
+  document?: LegalDocument | null;
 }
 
 export function ExportReportModal({
@@ -44,10 +44,11 @@ export function ExportReportModal({
     }
   }, [isOpen, handleKeyDown]);
 
-  const isDocB = doc.id.includes('v2') || doc.title.includes('Revised');
+  const isDocB = doc ? (doc.id.includes('v2') || doc.title.includes('Revised')) : false;
 
   // Compute or retrieve risk report
   const report: RiskAnalysisReport = React.useMemo(() => {
+    if (!doc) return SAMPLE_RISK_REPORT_A;
     if (isDocB) {
       return {
         overallRisk: 'low',
@@ -129,6 +130,7 @@ export function ExportReportModal({
 
   // Generate markdown representation of the legal brief
   const generateMarkdownReport = (): string => {
+    if (!doc) return '';
     const timestamp = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -191,6 +193,7 @@ export function ExportReportModal({
   };
 
   const handleDownloadMarkdown = () => {
+    if (!doc) return;
     const mdContent = generateMarkdownReport();
     const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -208,7 +211,7 @@ export function ExportReportModal({
     window.print();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !doc) return null;
 
   return (
     <div

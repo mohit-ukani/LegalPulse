@@ -19,7 +19,7 @@ import {
 import { LegalDocument } from '@/lib/types';
 
 interface NavbarProps {
-  currentDoc: LegalDocument;
+  currentDoc?: LegalDocument | null;
   onSelectDoc: (docId: string) => void;
   availableDocs: LegalDocument[];
   activeMode: 'workstation' | 'comparison';
@@ -120,11 +120,13 @@ export function Navbar({
               aria-haspopup="listbox"
               aria-expanded={docDropdownOpen}
               className="w-full h-8 px-2.5 rounded-lg bg-secondary/70 hover:bg-secondary text-foreground border border-border/70 flex items-center justify-between text-xs font-medium transition-all cursor-pointer min-w-0"
-              title={currentDoc.title}
+              title={currentDoc ? currentDoc.title : 'No active document'}
             >
               <div className="flex items-center gap-1.5 min-w-0 truncate">
                 <FileText size={14} className="text-muted-foreground shrink-0" />
-                <span className="truncate text-xs">{currentDoc.title}</span>
+                <span className="truncate text-xs">
+                  {currentDoc ? currentDoc.title : 'No documents in session'}
+                </span>
               </div>
               <CaretDown size={11} className="text-muted-foreground shrink-0 ml-1" />
             </button>
@@ -139,41 +141,47 @@ export function Navbar({
                   <div className="px-3 py-1.5 text-[10px] font-semibold uppercase text-muted-foreground tracking-wider border-b border-border/50 mb-1">
                     Select Document
                   </div>
-                  {availableDocs.map((doc) => {
-                    const isUploaded = doc.id !== 'doc-apex-emp-v1' && doc.id !== 'doc-apex-emp-v2';
-                    return (
-                      <div
-                        key={doc.id}
-                        onClick={() => {
-                          onSelectDoc(doc.id);
-                          setDocDropdownOpen(false);
-                        }}
-                        className={`group w-full px-3 py-2 text-left flex items-start gap-2 hover:bg-secondary/80 transition-colors cursor-pointer ${
-                          doc.id === currentDoc.id ? 'bg-secondary font-medium text-foreground' : ''
-                        }`}
-                      >
-                        <FileText size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
-                        <div className="truncate min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <span className="truncate">{doc.title}</span>
-                            {isUploaded ? (
-                              <span className="shrink-0 text-[9px] font-mono px-1 py-0.2 rounded bg-foreground/5 text-foreground/80 border border-border/80 font-medium">
-                                Uploaded
-                              </span>
-                            ) : (
-                              <span className="shrink-0 text-[9px] font-mono px-1 py-0.2 rounded bg-secondary text-muted-foreground border border-border/60">
-                                Sample
-                              </span>
+                  {availableDocs.length === 0 ? (
+                    <div className="px-3 py-3 text-center text-xs text-muted-foreground">
+                      No documents in active session.
+                    </div>
+                  ) : (
+                    availableDocs.map((doc) => {
+                      const isUploaded = doc.id !== 'doc-apex-emp-v1' && doc.id !== 'doc-apex-emp-v2';
+                      const isSelected = Boolean(currentDoc && doc.id === currentDoc.id);
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => {
+                            onSelectDoc(doc.id);
+                            setDocDropdownOpen(false);
+                          }}
+                          className={`group w-full px-3 py-2 text-left flex items-start gap-2 hover:bg-secondary/80 transition-colors cursor-pointer ${
+                            isSelected ? 'bg-secondary font-medium text-foreground' : ''
+                          }`}
+                        >
+                          <FileText size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
+                          <div className="truncate min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="truncate">{doc.title}</span>
+                              {isUploaded ? (
+                                <span className="shrink-0 text-[9px] font-mono px-1 py-0.2 rounded bg-foreground/5 text-foreground/80 border border-border/80 font-medium">
+                                  Uploaded
+                                </span>
+                              ) : (
+                                <span className="shrink-0 text-[9px] font-mono px-1 py-0.2 rounded bg-secondary text-muted-foreground border border-border/60">
+                                  Sample
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                              {doc.numPages} {doc.numPages === 1 ? 'Page' : 'Pages'} · {doc.documentType.toUpperCase()}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0 ml-1">
+                            {isSelected && (
+                              <CheckCircle size={14} className="text-foreground shrink-0" weight="fill" />
                             )}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
-                            {doc.numPages} {doc.numPages === 1 ? 'Page' : 'Pages'} · {doc.documentType.toUpperCase()}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0 ml-1">
-                          {doc.id === currentDoc.id && (
-                            <CheckCircle size={14} className="text-foreground shrink-0" weight="fill" />
-                          )}
                           {isUploaded && onRequestDeleteDoc && (
                             <button
                               type="button"
@@ -192,7 +200,7 @@ export function Navbar({
                         </div>
                       </div>
                     );
-                  })}
+                  }))}
 
                   <div className="border-t border-border mt-1 pt-1">
                     <button
