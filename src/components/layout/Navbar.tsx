@@ -92,21 +92,21 @@ export function Navbar({
         </div>
 
         {/* Middle: Document Selector & Mode Switch */}
-        <div className="hidden md:flex items-center gap-3 flex-1 max-w-xl">
+        <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-1 min-w-0 max-w-md lg:max-w-xl">
           {/* Document Switcher Dropdown */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0 max-w-[220px] lg:max-w-xs">
             <button
               onClick={() => setDocDropdownOpen(!docDropdownOpen)}
               aria-haspopup="listbox"
               aria-expanded={docDropdownOpen}
-              className="w-full h-8.5 px-3 rounded-md bg-secondary hover:bg-muted text-foreground border border-border flex items-center justify-between text-xs font-medium transition-colors cursor-pointer"
+              className="w-full h-8.5 px-2.5 rounded-md bg-secondary hover:bg-muted text-foreground border border-border flex items-center justify-between text-xs font-medium transition-colors cursor-pointer min-w-0"
               title={currentDoc.title}
             >
-              <div className="flex items-center gap-2 truncate">
+              <div className="flex items-center gap-1.5 min-w-0 truncate">
                 <FileText size={15} className="text-muted-foreground shrink-0" />
-                <span className="truncate">{currentDoc.title}</span>
+                <span className="truncate text-xs">{currentDoc.title}</span>
               </div>
-              <CaretDown size={12} className="text-muted-foreground shrink-0 ml-1.5" />
+              <CaretDown size={12} className="text-muted-foreground shrink-0 ml-1" />
             </button>
 
             {docDropdownOpen && (
@@ -115,7 +115,7 @@ export function Navbar({
                   className="fixed inset-0 z-40"
                   onClick={() => setDocDropdownOpen(false)}
                 />
-                <div className="absolute left-0 right-0 top-10 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg py-1.5 text-xs" role="listbox" aria-label="Available documents">
+                <div className="absolute left-0 right-0 top-10 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg py-1.5 text-xs w-[320px] max-w-[90vw]" role="listbox" aria-label="Available documents">
                   <div className="px-3 py-1 text-[10px] font-semibold uppercase text-muted-foreground tracking-wider">
                     Select Document
                   </div>
@@ -131,7 +131,7 @@ export function Navbar({
                       }`}
                     >
                       <FileText size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
-                      <div className="truncate">
+                      <div className="truncate min-w-0 flex-1">
                         <div className="truncate">{doc.title}</div>
                         <div className="text-[10px] text-muted-foreground font-normal">
                           {doc.numPages} Pages · {doc.documentType.toUpperCase()}
@@ -164,7 +164,7 @@ export function Navbar({
           <div className="flex bg-secondary p-0.5 rounded-md border border-border shrink-0">
             <button
               onClick={() => onSelectMode('workstation')}
-              className={`px-3 py-1 text-xs font-medium rounded transition-all cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all cursor-pointer ${
                 activeMode === 'workstation'
                   ? 'bg-card text-foreground shadow-xs font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
@@ -174,34 +174,36 @@ export function Navbar({
             </button>
             <button
               onClick={() => onSelectMode('comparison')}
-              className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1 cursor-pointer ${
                 activeMode === 'comparison'
                   ? 'bg-card text-foreground shadow-xs font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <GitDiff size={13} />
-              Compare Versions
+              <span>Compare</span>
+              <span className="hidden xl:inline">Versions</span>
             </button>
           </div>
         </div>
 
         {/* Right side controls */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {onOpenExport && (
             <button
               onClick={onOpenExport}
-              className="h-8.5 px-3 rounded-md border border-border bg-secondary hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="h-8.5 px-2.5 sm:px-3 rounded-md border border-border bg-secondary hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
               title="Export Executive Legal Audit Brief"
             >
               <DownloadSimple size={14} />
-              <span className="hidden sm:inline">Export Brief</span>
+              <span className="hidden lg:inline">Export Brief</span>
+              <span className="inline lg:hidden">Export</span>
             </button>
           )}
 
           <button
             onClick={onOpenUpload}
-            className="h-8.5 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            className="h-8.5 px-2.5 sm:px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
           >
             <UploadSimple size={14} weight="bold" />
             <span className="hidden sm:inline">Upload PDF</span>
@@ -209,7 +211,7 @@ export function Navbar({
 
           <button
             onClick={onOpenSettings}
-            className={`h-8.5 px-2.5 rounded-md border text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`h-8.5 px-2 sm:px-2.5 rounded-md border text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
               apiKeySet
                 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                 : 'border-border bg-secondary hover:bg-muted text-foreground'
@@ -222,7 +224,7 @@ export function Navbar({
 
           <button
             onClick={toggleTheme}
-            className="h-8.5 w-8.5 rounded-md border border-border bg-secondary hover:bg-muted text-foreground flex items-center justify-center transition-colors cursor-pointer"
+            className="h-8.5 w-8.5 rounded-md border border-border bg-secondary hover:bg-muted text-foreground flex items-center justify-center transition-colors cursor-pointer shrink-0"
             aria-label="Toggle Theme"
           >
             {isDark ? <Sun size={15} /> : <Moon size={15} />}

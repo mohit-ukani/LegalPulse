@@ -28,13 +28,13 @@ export const metadata: Metadata = {
     template: "%s | LegalPulse",
   },
   description:
-    "An intelligent legal workstation featuring grounded visual citations, one-click guided actions, risk scoring, and contract comparison powered by Google Gemini 1.5 Flash.",
+    "An intelligent legal workstation featuring grounded visual citations, one-click guided actions, risk scoring, and contract comparison powered by Google Gemini 3.8 Flash.",
   keywords: [
     "AI Legal Assistant",
     "Contract Risk Analysis",
     "Legal Access",
     "Grounded Citations",
-    "Gemini 1.5 Flash",
+    "Gemini 3.8 Flash",
     "PromptWars",
     "LegalTech",
     "Contract Comparison",

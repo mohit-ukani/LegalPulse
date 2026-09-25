@@ -55,6 +55,9 @@ export function AnalysisWorkspace({
     }
   }, [externalPrompt]);
 
+  const onCitationClickRef = React.useRef(onCitationClick);
+  onCitationClickRef.current = onCitationClick;
+
   const handleSelectQuickAction = React.useCallback(async (actionId: QuickActionId) => {
     setActiveActionId(actionId);
     setActionLoading(true);
@@ -76,7 +79,7 @@ export function AnalysisWorkspace({
         setActionResult(data.result);
         // Automatically highlight the first citation in the PDF viewer
         if (data.result.citations && data.result.citations.length > 0) {
-          onCitationClick(data.result.citations[0]);
+          onCitationClickRef.current(data.result.citations[0]);
         }
       }
     } catch (err) {
@@ -84,12 +87,13 @@ export function AnalysisWorkspace({
     } finally {
       setActionLoading(false);
     }
-  }, [document, onCitationClick, apiKey]);
+  }, [document, apiKey]);
 
-  // Auto-run initial quick action on doc load
+  // Auto-run initial quick action on doc load ONLY once per document
   React.useEffect(() => {
     handleSelectQuickAction('notice_period');
-  }, [document.id, handleSelectQuickAction]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [document.id]);
 
   const handleAskInChat = (questionText: string) => {
     setChatPromptToInject({ text: questionText, timestamp: Date.now() });
@@ -203,7 +207,7 @@ export function AnalysisWorkspace({
             {actionLoading ? (
               <div className="p-6 rounded-xl border border-border bg-card flex flex-col items-center justify-center space-y-2 text-center text-xs text-muted-foreground">
                 <Sparkle size={20} className="animate-spin text-emerald-600" />
-                <div>Analyzing clauses with Gemini 1.5 Flash...</div>
+                <div>Analyzing clauses with Gemini 3.8 Flash...</div>
                 <div className="text-[10px]">Retrieving fine-grained citations and verifying text layout.</div>
               </div>
             ) : actionResult ? (

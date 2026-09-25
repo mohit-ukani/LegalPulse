@@ -63,9 +63,19 @@ export default function Home() {
     setActiveCitation(null);
   };
 
-  const handleCitationClick = (citation: Citation) => {
-    setActiveCitation(citation);
-  };
+  const handleCitationClick = React.useCallback((citation: Citation) => {
+    setActiveCitation((prev) => {
+      if (
+        prev &&
+        prev.pageNumber === citation.pageNumber &&
+        prev.sectionNumber === citation.sectionNumber &&
+        prev.clauseId === citation.clauseId
+      ) {
+        return prev;
+      }
+      return citation;
+    });
+  }, []);
 
   return (
     <ErrorBoundary>
