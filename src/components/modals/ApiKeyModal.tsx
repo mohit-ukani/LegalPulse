@@ -53,7 +53,7 @@ export function ApiKeyModal({
             </div>
             <div>
               <h3 id="apikey-modal-title" className="font-bold text-sm text-foreground">
-                Google Gemini 1.5 Flash Configuration
+                Google Gemini AI Engine Configuration
               </h3>
               <p className="text-xs text-muted-foreground">
                 Google Cloud Ecosystem AI Engine

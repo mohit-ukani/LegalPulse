@@ -115,8 +115,8 @@ export function Navbar({
                   className="fixed inset-0 z-40"
                   onClick={() => setDocDropdownOpen(false)}
                 />
-                <div className="absolute left-0 right-0 top-10 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg py-1.5 text-xs w-[320px] max-w-[90vw]" role="listbox" aria-label="Available documents">
-                  <div className="px-3 py-1 text-[10px] font-semibold uppercase text-muted-foreground tracking-wider">
+                <div className="absolute left-0 top-10 z-50 bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl py-1.5 text-xs w-[340px] max-w-[90vw] ring-1 ring-black/10 dark:ring-white/10" role="listbox" aria-label="Available documents">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/50 mb-1">
                     Select Document
                   </div>
                   {availableDocs.map((doc) => (
