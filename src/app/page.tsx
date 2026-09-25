@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { CheckCircle } from '@phosphor-icons/react';
 import { LegalDocument, Citation } from '@/lib/types';
 import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
 import { Navbar } from '@/components/layout/Navbar';
@@ -11,6 +12,7 @@ import { ComparisonWorkspace } from '@/components/comparison/ComparisonWorkspace
 import { UploadModal } from '@/components/modals/UploadModal';
 import { ApiKeyModal } from '@/components/modals/ApiKeyModal';
 import { ExportReportModal } from '@/components/modals/ExportReportModal';
+import { DeleteDocumentModal } from '@/components/modals/DeleteDocumentModal';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export default function Home() {
@@ -21,16 +23,37 @@ export default function Home() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<LegalDocument | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string>('');
   const [chatPromptTrigger, setChatPromptTrigger] = useState<{ text: string; timestamp: number } | null>(null);
 
-  // Load API key from localStorage if saved
+  // Load API key and custom uploaded documents from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedKey = localStorage.getItem('legalpulse_gemini_key') || '';
       setApiKey(savedKey);
+
+      try {
+        const savedCustomDocs = localStorage.getItem('legalpulse_custom_docs');
+        if (savedCustomDocs) {
+          const parsed = JSON.parse(savedCustomDocs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setDocuments([SAMPLE_DOC_A, SAMPLE_DOC_B, ...parsed]);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load custom docs from localStorage', e);
+      }
     }
   }, []);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
 
   const currentDoc = documents.find((d) => d.id === currentDocId) || documents[0];
 
@@ -56,11 +79,49 @@ export default function Home() {
   const handleDocumentLoaded = (newDoc: LegalDocument) => {
     setDocuments((prev) => {
       const exists = prev.some((d) => d.id === newDoc.id);
-      if (exists) return prev.map((d) => (d.id === newDoc.id ? newDoc : d));
-      return [newDoc, ...prev];
+      const updated = exists ? prev.map((d) => (d.id === newDoc.id ? newDoc : d)) : [newDoc, ...prev];
+      if (typeof window !== 'undefined') {
+        try {
+          const customDocs = updated.filter(
+            (d) => d.id !== SAMPLE_DOC_A.id && d.id !== SAMPLE_DOC_B.id
+          );
+          localStorage.setItem('legalpulse_custom_docs', JSON.stringify(customDocs));
+        } catch (e) {
+          console.warn('Failed to save custom doc to localStorage', e);
+        }
+      }
+      return updated;
     });
     setCurrentDocId(newDoc.id);
     setActiveCitation(null);
+    showToast(`Loaded "${newDoc.title.split('—')[0].trim()}"`);
+  };
+
+  const handleDeleteDocument = (docIdToDelete: string) => {
+    const docToDeleteItem = documents.find((d) => d.id === docIdToDelete);
+    const docName = docToDeleteItem ? docToDeleteItem.title.split('—')[0].trim() : 'Document';
+
+    setDocuments((prev) => {
+      const updated = prev.filter((d) => d.id !== docIdToDelete);
+      if (typeof window !== 'undefined') {
+        try {
+          const customDocs = updated.filter(
+            (d) => d.id !== SAMPLE_DOC_A.id && d.id !== SAMPLE_DOC_B.id
+          );
+          localStorage.setItem('legalpulse_custom_docs', JSON.stringify(customDocs));
+        } catch (e) {
+          console.warn('Failed to update localStorage after doc deletion', e);
+        }
+      }
+      return updated;
+    });
+
+    if (currentDocId === docIdToDelete) {
+      setCurrentDocId(SAMPLE_DOC_A.id);
+      setActiveCitation(null);
+    }
+
+    showToast(`Deleted "${docName}" from session`);
   };
 
   const handleCitationClick = React.useCallback((citation: Citation) => {
@@ -93,6 +154,7 @@ export default function Home() {
           onOpenUpload={() => setUploadModalOpen(true)}
           onOpenSettings={() => setApiKeyModalOpen(true)}
           onOpenExport={() => setExportModalOpen(true)}
+          onRequestDeleteDoc={(doc) => setDocToDelete(doc)}
           apiKeySet={Boolean(apiKey)}
         />
 
@@ -122,6 +184,7 @@ export default function Home() {
                 <InteractivePdfViewer
                   document={currentDoc}
                   activeCitation={activeCitation}
+                  onRequestDelete={(doc) => setDocToDelete(doc)}
                   onAskAboutText={(selectedText) => {
                     // Switch to grounded chat and ask about selected passage
                     setChatPromptTrigger({
@@ -151,11 +214,25 @@ export default function Home() {
           )}
         </main>
 
-        {/* Upload Modal */}
+        {/* Upload Modal with Uploaded Documents Management */}
         <UploadModal
           isOpen={uploadModalOpen}
           onClose={() => setUploadModalOpen(false)}
           onDocumentLoaded={handleDocumentLoaded}
+          uploadedDocs={documents.filter((d) => d.id !== SAMPLE_DOC_A.id && d.id !== SAMPLE_DOC_B.id)}
+          onDeleteDocument={(doc) => setDocToDelete(doc)}
+          onSelectDocument={(id) => {
+            setCurrentDocId(id);
+            setActiveCitation(null);
+          }}
+        />
+
+        {/* Delete Document Confirmation Modal */}
+        <DeleteDocumentModal
+          isOpen={Boolean(docToDelete)}
+          document={docToDelete}
+          onClose={() => setDocToDelete(null)}
+          onConfirmDelete={handleDeleteDocument}
         />
 
         {/* Gemini Settings Modal */}
@@ -172,6 +249,18 @@ export default function Home() {
           onClose={() => setExportModalOpen(false)}
           document={currentDoc}
         />
+
+        {/* Subtle Minimalist Toast Notification */}
+        {toastMessage && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-foreground text-background px-3.5 py-2 rounded-xl shadow-xl text-xs font-medium animate-in fade-in slide-in-from-bottom-2 border border-border/20"
+          >
+            <CheckCircle size={15} weight="fill" className="text-emerald-400 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

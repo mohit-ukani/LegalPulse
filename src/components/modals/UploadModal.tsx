@@ -9,6 +9,7 @@ import {
   CheckCircle,
   WarningCircle,
   FilePdf,
+  TrashSimple,
 } from '@phosphor-icons/react';
 import { LegalDocument } from '@/lib/types';
 import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
@@ -17,12 +18,18 @@ interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDocumentLoaded: (doc: LegalDocument) => void;
+  uploadedDocs?: LegalDocument[];
+  onDeleteDocument?: (doc: LegalDocument) => void;
+  onSelectDocument?: (docId: string) => void;
 }
 
 export function UploadModal({
   isOpen,
   onClose,
   onDocumentLoaded,
+  uploadedDocs,
+  onDeleteDocument,
+  onSelectDocument,
 }: UploadModalProps) {
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -178,6 +185,54 @@ export function UploadModal({
           <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
             <WarningCircle size={15} weight="fill" className="shrink-0" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {/* Uploaded Contracts Management Section */}
+        {uploadedDocs && uploadedDocs.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-border">
+            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span>Your Uploaded Documents ({uploadedDocs.length})</span>
+              <span className="text-[10px] font-normal normal-case text-muted-foreground">Click to load or delete</span>
+            </div>
+            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+              {uploadedDocs.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-2 rounded-lg bg-secondary/60 hover:bg-secondary border border-border/80 text-xs transition-colors"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onSelectDocument) {
+                        onSelectDocument(doc.id);
+                        onClose();
+                      }
+                    }}
+                    className="flex items-center gap-2 min-w-0 text-left cursor-pointer flex-1 mr-2"
+                  >
+                    <FileText size={14} className="text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1 truncate">
+                      <div className="font-medium text-foreground truncate">{doc.title}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {doc.numPages} {doc.numPages === 1 ? 'Page' : 'Pages'} · {doc.documentType.toUpperCase()}
+                      </div>
+                    </div>
+                  </button>
+                  {onDeleteDocument && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteDocument(doc)}
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
+                      title={`Delete "${doc.title}"`}
+                      aria-label={`Delete ${doc.title}`}
+                    >
+                      <TrashSimple size={14} weight="bold" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

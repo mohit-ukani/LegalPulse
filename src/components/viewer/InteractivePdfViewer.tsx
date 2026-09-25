@@ -13,6 +13,7 @@ import {
   Sparkle,
   ArrowSquareOut,
   ChatText,
+  TrashSimple,
 } from '@phosphor-icons/react';
 import { Citation, LegalDocument } from '@/lib/types';
 
@@ -20,12 +21,14 @@ interface InteractivePdfViewerProps {
   document: LegalDocument;
   activeCitation?: Citation | null;
   onAskAboutText?: (selectedText: string) => void;
+  onRequestDelete?: (doc: LegalDocument) => void;
 }
 
 export function InteractivePdfViewer({
   document,
   activeCitation,
   onAskAboutText,
+  onRequestDelete,
 }: InteractivePdfViewerProps) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
@@ -243,6 +246,17 @@ export function InteractivePdfViewer({
             >
               <ArrowSquareOut size={14} />
             </a>
+          )}
+
+          {onRequestDelete && document.id !== 'doc-apex-emp-v1' && document.id !== 'doc-apex-emp-v2' && (
+            <button
+              onClick={() => onRequestDelete(document)}
+              className="h-7 px-2 rounded-md hover:bg-red-500/10 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 border border-border/70 flex items-center gap-1 text-xs transition-colors cursor-pointer"
+              title={`Delete uploaded contract "${document.title}"`}
+            >
+              <TrashSimple size={13} weight="bold" />
+              <span className="hidden sm:inline text-[11px] font-medium">Delete</span>
+            </button>
           )}
         </div>
       </div>

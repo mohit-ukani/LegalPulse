@@ -13,6 +13,7 @@ import {
   CaretDown,
   FileText,
   DownloadSimple,
+  TrashSimple,
 } from '@phosphor-icons/react';
 import { LegalDocument } from '@/lib/types';
 
@@ -25,6 +26,7 @@ interface NavbarProps {
   onOpenUpload: () => void;
   onOpenSettings: () => void;
   onOpenExport?: () => void;
+  onRequestDeleteDoc?: (doc: LegalDocument) => void;
   apiKeySet: boolean;
 }
 
@@ -37,6 +39,7 @@ export function Navbar({
   onOpenUpload,
   onOpenSettings,
   onOpenExport,
+  onRequestDeleteDoc,
   apiKeySet,
 }: NavbarProps) {
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
@@ -119,29 +122,60 @@ export function Navbar({
                   <div className="px-3 py-1.5 text-[10px] font-semibold uppercase text-muted-foreground tracking-wider border-b border-border/50 mb-1">
                     Select Document
                   </div>
-                  {availableDocs.map((doc) => (
-                    <button
-                      key={doc.id}
-                      onClick={() => {
-                        onSelectDoc(doc.id);
-                        setDocDropdownOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left flex items-start gap-2 hover:bg-secondary/80 transition-colors cursor-pointer ${
-                        doc.id === currentDoc.id ? 'bg-secondary font-medium text-foreground' : ''
-                      }`}
-                    >
-                      <FileText size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
-                      <div className="truncate min-w-0 flex-1">
-                        <div className="truncate">{doc.title}</div>
-                        <div className="text-[10px] text-muted-foreground font-normal">
-                          {doc.numPages} Pages · {doc.documentType.toUpperCase()}
+                  {availableDocs.map((doc) => {
+                    const isUploaded = doc.id !== 'doc-apex-emp-v1' && doc.id !== 'doc-apex-emp-v2';
+                    return (
+                      <div
+                        key={doc.id}
+                        onClick={() => {
+                          onSelectDoc(doc.id);
+                          setDocDropdownOpen(false);
+                        }}
+                        className={`group w-full px-3 py-2 text-left flex items-start gap-2 hover:bg-secondary/80 transition-colors cursor-pointer ${
+                          doc.id === currentDoc.id ? 'bg-secondary font-medium text-foreground' : ''
+                        }`}
+                      >
+                        <FileText size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
+                        <div className="truncate min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="truncate">{doc.title}</span>
+                            {isUploaded ? (
+                              <span className="shrink-0 text-[9px] font-mono px-1 py-0.2 rounded bg-foreground/5 text-foreground/80 border border-border/80 font-medium">
+                                Uploaded
+                              </span>
+                            ) : (
+                              <span className="shrink-0 text-[9px] font-mono px-1 py-0.2 rounded bg-secondary text-muted-foreground border border-border/60">
+                                Sample
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                            {doc.numPages} {doc.numPages === 1 ? 'Page' : 'Pages'} · {doc.documentType.toUpperCase()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0 ml-1">
+                          {doc.id === currentDoc.id && (
+                            <CheckCircle size={14} className="text-foreground shrink-0" weight="fill" />
+                          )}
+                          {isUploaded && onRequestDeleteDoc && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDocDropdownOpen(false);
+                                onRequestDeleteDoc(doc);
+                              }}
+                              className="p-1 rounded-md text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 opacity-70 group-hover:opacity-100 transition-all cursor-pointer"
+                              title={`Delete uploaded contract "${doc.title}"`}
+                              aria-label={`Delete ${doc.title}`}
+                            >
+                              <TrashSimple size={13} weight="bold" />
+                            </button>
+                          )}
                         </div>
                       </div>
-                      {doc.id === currentDoc.id && (
-                        <CheckCircle size={14} className="ml-auto mt-0.5 text-foreground shrink-0" weight="fill" />
-                      )}
-                    </button>
-                  ))}
+                    );
+                  })}
 
                   <div className="border-t border-border mt-1 pt-1">
                     <button
