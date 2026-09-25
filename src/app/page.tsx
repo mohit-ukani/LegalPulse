@@ -125,12 +125,29 @@ export default function Home() {
       return updated;
     });
 
+    const remainingDocs = documents.filter((d) => d.id !== docIdToDelete);
     if (currentDocId === docIdToDelete) {
-      setCurrentDocId(SAMPLE_DOC_A.id);
+      if (remainingDocs.length > 0) {
+        setCurrentDocId(remainingDocs[0].id);
+      } else {
+        setCurrentDocId(SAMPLE_DOC_A.id);
+      }
       setActiveCitation(null);
     }
 
     showToast(`Deleted "${docName}" from session`);
+  };
+
+  const handleResetSamples = () => {
+    setDocuments((prev) => {
+      const customDocs = prev.filter(
+        (d) => d.id !== SAMPLE_DOC_A.id && d.id !== SAMPLE_DOC_B.id
+      );
+      return [SAMPLE_DOC_A, SAMPLE_DOC_B, ...customDocs];
+    });
+    setCurrentDocId(SAMPLE_DOC_A.id);
+    setActiveCitation(null);
+    showToast('Restored default benchmark sample contracts');
   };
 
   const toggleSidebar = () => {
@@ -173,6 +190,7 @@ export default function Home() {
           onRequestDeleteDoc={(doc) => setDocToDelete(doc)}
           onOpenUpload={() => setUploadModalOpen(true)}
           onOpenSettings={() => setApiKeyModalOpen(true)}
+          onResetSamples={handleResetSamples}
           apiKeySet={Boolean(apiKey)}
         />
 

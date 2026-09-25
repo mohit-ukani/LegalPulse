@@ -25,6 +25,7 @@ interface DocumentSidebarProps {
   onRequestDeleteDoc: (doc: LegalDocument) => void;
   onOpenUpload: () => void;
   onOpenSettings: () => void;
+  onResetSamples?: () => void;
   apiKeySet: boolean;
 }
 
@@ -37,6 +38,7 @@ export function DocumentSidebar({
   onRequestDeleteDoc,
   onOpenUpload,
   onOpenSettings,
+  onResetSamples,
   apiKeySet,
 }: DocumentSidebarProps) {
   // Close on Escape when open on mobile
@@ -56,6 +58,9 @@ export function DocumentSidebar({
 
   const customDocs = documents.filter(
     (d) => d.id !== SAMPLE_DOC_A.id && d.id !== SAMPLE_DOC_B.id
+  );
+  const benchmarkDocs = documents.filter(
+    (d) => d.id === SAMPLE_DOC_A.id || d.id === SAMPLE_DOC_B.id
   );
 
   return (
@@ -181,10 +186,10 @@ export function DocumentSidebar({
                         </div>
                       </div>
 
-                      {/* Right Actions: Delete icon on hover (like ChatGPT chat deletion) */}
+                      {/* Right Actions: Delete icon (visible, highlights red on hover) */}
                       <div className="flex items-center gap-1 shrink-0">
                         {isActive && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 group-hover:hidden" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                         )}
                         <button
                           type="button"
@@ -192,7 +197,7 @@ export function DocumentSidebar({
                             e.stopPropagation();
                             onRequestDeleteDoc(doc);
                           }}
-                          className="opacity-0 group-hover:opacity-100 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg text-muted-foreground transition-all cursor-pointer"
+                          className="p-1.5 rounded-lg text-muted-foreground/80 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                           title={`Delete "${doc.title}"`}
                           aria-label={`Delete ${doc.title}`}
                         >
@@ -210,62 +215,106 @@ export function DocumentSidebar({
           <div>
             <div className="px-2 pb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               <span>Benchmark Samples</span>
-              <span>2</span>
+              <div className="flex items-center gap-2">
+                {onResetSamples && benchmarkDocs.length < 2 && (
+                  <button
+                    type="button"
+                    onClick={onResetSamples}
+                    className="text-[10px] lowercase text-primary hover:underline font-normal cursor-pointer"
+                    title="Restore default benchmark sample contracts"
+                  >
+                    restore defaults
+                  </button>
+                )}
+                <span>{benchmarkDocs.length}</span>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              {[SAMPLE_DOC_A, SAMPLE_DOC_B].map((doc) => {
-                const isActive = doc.id === currentDocId;
-                const isHighRisk = doc.id === SAMPLE_DOC_A.id;
-                return (
-                  <div
-                    key={doc.id}
-                    onClick={() => {
-                      onSelectDoc(doc.id);
-                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                        onToggle();
-                      }
-                    }}
-                    className={`group relative flex items-center justify-between w-full px-2.5 py-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-secondary text-foreground font-medium shadow-2xs border border-border/80'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
-                    }`}
+            {benchmarkDocs.length === 0 ? (
+              <div className="p-3 mx-1 rounded-xl bg-secondary/40 border border-dashed border-border/80 text-center">
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  Benchmark samples deleted.
+                </p>
+                {onResetSamples && (
+                  <button
+                    type="button"
+                    onClick={onResetSamples}
+                    className="mt-2 text-[10px] font-medium text-foreground underline underline-offset-2 hover:opacity-80 cursor-pointer"
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <FileText
-                        size={15}
-                        className={`shrink-0 ${
-                          isActive ? 'text-foreground' : 'text-muted-foreground'
-                        }`}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-xs font-medium text-foreground">
-                          {doc.title.split('—')[0].trim()}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                          <span>{doc.numPages} Pages</span>
-                          <span>·</span>
-                          <span
-                            className={
-                              isHighRisk
-                                ? 'text-red-600 dark:text-red-400 font-medium'
-                                : 'text-emerald-600 dark:text-emerald-400 font-medium'
-                            }
-                          >
-                            {isHighRisk ? 'High Risk' : 'Negotiated'}
-                          </span>
+                    Restore sample contracts
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {benchmarkDocs.map((doc) => {
+                  const isActive = doc.id === currentDocId;
+                  const isHighRisk = doc.id === SAMPLE_DOC_A.id;
+                  return (
+                    <div
+                      key={doc.id}
+                      onClick={() => {
+                        onSelectDoc(doc.id);
+                        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                          onToggle();
+                        }
+                      }}
+                      className={`group relative flex items-center justify-between w-full px-2.5 py-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-secondary text-foreground font-medium shadow-2xs border border-border/80'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
+                        <FileText
+                          size={15}
+                          className={`shrink-0 ${
+                            isActive ? 'text-foreground' : 'text-muted-foreground'
+                          }`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-xs font-medium text-foreground">
+                            {doc.title.split('—')[0].trim()}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                            <span>{doc.numPages} Pages</span>
+                            <span>·</span>
+                            <span
+                              className={
+                                isHighRisk
+                                  ? 'text-red-600 dark:text-red-400 font-medium'
+                                  : 'text-emerald-600 dark:text-emerald-400 font-medium'
+                              }
+                            >
+                              {isHighRisk ? 'High Risk' : 'Negotiated'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {isActive && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 ml-1" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      {/* Right Actions: Active indicator + Delete icon */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {isActive && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRequestDeleteDoc(doc);
+                          }}
+                          className="p-1.5 rounded-lg text-muted-foreground/80 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                          title={`Delete "${doc.title.split('—')[0].trim()}"`}
+                          aria-label={`Delete ${doc.title}`}
+                        >
+                          <TrashSimple size={14} weight="bold" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
