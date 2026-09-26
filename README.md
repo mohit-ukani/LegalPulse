@@ -15,7 +15,7 @@
 ---
 
 ## Live Deployment & Demonstration Links
-* **Live Web Application (Cloudflare Tunnel):** [https://notebooks-arrangements-punch-stomach.trycloudflare.com](https://notebooks-arrangements-punch-stomach.trycloudflare.com)
+* **Live Web Application (Cloudflare Tunnel):** [https://simple-their-income-redhead.trycloudflare.com](https://simple-their-income-redhead.trycloudflare.com)
 * **Local Production Build:** `http://localhost:3000`
 * **Test Suite Status:** `51 passed (100%) across 6 test suites` (`npm test`)
 * **Linter Status:** `0 errors, 0 warnings` (`npm run lint`)
