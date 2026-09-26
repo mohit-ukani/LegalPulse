@@ -8,9 +8,11 @@ import {
   TrashSimple,
   Gear,
   UploadSimple,
+  Briefcase,
+  Buildings,
 } from '@phosphor-icons/react';
-import { LegalDocument } from '@/lib/types';
-import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
+import { LegalDocument, ChallengePersona } from '@/lib/types';
+import { SAMPLE_DOC_A, SAMPLE_DOC_B, SAMPLE_DOC_C, SAMPLE_DOC_D } from '@/lib/sample-data';
 
 interface DocumentSidebarProps {
   isOpen: boolean;
@@ -23,6 +25,8 @@ interface DocumentSidebarProps {
   onOpenSettings: () => void;
   onResetSamples?: () => void;
   apiKeySet: boolean;
+  activePersona?: ChallengePersona;
+  onSelectPersona?: (persona: ChallengePersona) => void;
 }
 
 export function DocumentSidebar({
@@ -36,6 +40,8 @@ export function DocumentSidebar({
   onOpenSettings,
   onResetSamples,
   apiKeySet,
+  activePersona = 'professional',
+  onSelectPersona,
 }: DocumentSidebarProps) {
   // Close on Escape when open on mobile
   const handleKeyDown = useCallback(
@@ -53,11 +59,19 @@ export function DocumentSidebar({
   }, [handleKeyDown]);
 
   const customDocs = documents.filter(
-    (d) => d.id !== SAMPLE_DOC_A.id && d.id !== SAMPLE_DOC_B.id
+    (d) =>
+      d.id !== SAMPLE_DOC_A.id &&
+      d.id !== SAMPLE_DOC_B.id &&
+      d.id !== SAMPLE_DOC_C.id &&
+      d.id !== SAMPLE_DOC_D.id
   );
-  const benchmarkDocs = documents.filter(
+  const professionalDocs = documents.filter(
     (d) => d.id === SAMPLE_DOC_A.id || d.id === SAMPLE_DOC_B.id
   );
+  const businessDocs = documents.filter(
+    (d) => d.id === SAMPLE_DOC_C.id || d.id === SAMPLE_DOC_D.id
+  );
+  const totalBenchmarkCount = professionalDocs.length + businessDocs.length;
 
   return (
     <>
@@ -106,7 +120,6 @@ export function DocumentSidebar({
             type="button"
             onClick={() => {
               onOpenUpload();
-              // On mobile, close sidebar after clicking upload
               if (typeof window !== 'undefined' && window.innerWidth < 768) {
                 onToggle();
               }
@@ -123,9 +136,209 @@ export function DocumentSidebar({
           </button>
         </div>
 
+        {/* Persona Focus Quick Toggle */}
+        {onSelectPersona && (
+          <div className="px-3 pt-2.5 pb-2 border-b border-border/60 bg-secondary/15 shrink-0">
+            <div className="text-[9.5px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center justify-between">
+              <span>Persona Perspective</span>
+              <span className="font-mono text-[9px]">
+                {activePersona === 'professional' ? 'Employee / Counsel' : 'Enterprise B2B'}
+              </span>
+            </div>
+            <div className="flex bg-secondary/80 p-0.5 rounded-lg border border-border/70 text-xs">
+              <button
+                type="button"
+                onClick={() => onSelectPersona('professional')}
+                className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activePersona === 'professional'
+                    ? 'bg-card text-foreground shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Professional Focus: Employee rights, non-compete clauses, and IP ownership"
+              >
+                <Briefcase size={12} weight={activePersona === 'professional' ? 'bold' : 'regular'} className={activePersona === 'professional' ? 'text-emerald-500' : ''} />
+                <span>Professional</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelectPersona('business')}
+                className={`flex-1 py-1 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activePersona === 'business'
+                    ? 'bg-card text-foreground shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Business Focus: Commercial MSAs, liability caps, SLA credits, and indemnification"
+              >
+                <Buildings size={12} weight={activePersona === 'business' ? 'bold' : 'regular'} className={activePersona === 'business' ? 'text-sky-500' : ''} />
+                <span>Business</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Scrollable Document List (ChatGPT & Gemini chats style) */}
         <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
-          {/* Section 1: Uploaded Documents */}
+          {/* Section 1: Professional Benchmark Contracts */}
+          <div>
+            <div className="px-2 pb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <Briefcase size={11} weight="bold" />
+                <span>Professional Contracts</span>
+              </span>
+              <span>{professionalDocs.length}</span>
+            </div>
+
+            <div className="space-y-1">
+              {professionalDocs.map((doc) => {
+                const isActive = doc.id === currentDocId;
+                const isHighRisk = doc.id === SAMPLE_DOC_A.id;
+                return (
+                  <div
+                    key={doc.id}
+                    onClick={() => {
+                      onSelectDoc(doc.id);
+                      onSelectPersona?.('professional');
+                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        onToggle();
+                      }
+                    }}
+                    className={`group relative flex items-center justify-between w-full px-2.5 py-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-secondary text-foreground font-medium shadow-2xs border border-border/80'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
+                      <FileText
+                        size={15}
+                        className={`shrink-0 ${
+                          isActive ? 'text-foreground' : 'text-muted-foreground'
+                        }`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs font-medium text-foreground">
+                          {doc.title.split('—')[0].trim()}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                          <span>{doc.numPages} Pages</span>
+                          <span>·</span>
+                          <span
+                            className={
+                              isHighRisk
+                                ? 'text-red-600 dark:text-red-400 font-medium'
+                                : 'text-emerald-600 dark:text-emerald-400 font-medium'
+                            }
+                          >
+                            {isHighRisk ? 'High Risk' : 'Negotiated'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isActive && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRequestDeleteDoc(doc);
+                        }}
+                        className="p-1.5 rounded-lg text-muted-foreground/80 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        title={`Delete "${doc.title.split('—')[0].trim()}"`}
+                        aria-label={`Delete ${doc.title}`}
+                      >
+                        <TrashSimple size={14} weight="bold" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 2: Business & Commercial MSAs */}
+          <div>
+            <div className="px-2 pb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="flex items-center gap-1 text-sky-600 dark:text-sky-400">
+                <Buildings size={11} weight="bold" />
+                <span>Business MSAs (B2B)</span>
+              </span>
+              <span>{businessDocs.length}</span>
+            </div>
+
+            <div className="space-y-1">
+              {businessDocs.map((doc) => {
+                const isActive = doc.id === currentDocId;
+                const isHighRisk = doc.id === SAMPLE_DOC_C.id;
+                return (
+                  <div
+                    key={doc.id}
+                    onClick={() => {
+                      onSelectDoc(doc.id);
+                      onSelectPersona?.('business');
+                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        onToggle();
+                      }
+                    }}
+                    className={`group relative flex items-center justify-between w-full px-2.5 py-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-secondary text-foreground font-medium shadow-2xs border border-border/80'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
+                      <FileText
+                        size={15}
+                        className={`shrink-0 ${
+                          isActive ? 'text-foreground' : 'text-muted-foreground'
+                        }`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs font-medium text-foreground">
+                          {doc.title.split('—')[0].trim()}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                          <span>{doc.numPages} Pages</span>
+                          <span>·</span>
+                          <span
+                            className={
+                              isHighRisk
+                                ? 'text-red-600 dark:text-red-400 font-medium'
+                                : 'text-sky-600 dark:text-sky-400 font-medium'
+                            }
+                          >
+                            {isHighRisk ? 'Uncapped Liability' : 'Bilateral Standard'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isActive && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRequestDeleteDoc(doc);
+                        }}
+                        className="p-1.5 rounded-lg text-muted-foreground/80 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        title={`Delete "${doc.title.split('—')[0].trim()}"`}
+                        aria-label={`Delete ${doc.title}`}
+                      >
+                        <TrashSimple size={14} weight="bold" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 3: Uploaded Documents */}
           <div>
             <div className="px-2 pb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               <span>Your Uploads</span>
@@ -182,7 +395,6 @@ export function DocumentSidebar({
                         </div>
                       </div>
 
-                      {/* Right Actions: Delete icon (visible, highlights red on hover) */}
                       <div className="flex items-center gap-1 shrink-0">
                         {isActive && (
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
@@ -207,111 +419,18 @@ export function DocumentSidebar({
             )}
           </div>
 
-          {/* Section 2: Benchmark Agreements */}
-          <div>
-            <div className="px-2 pb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <span>Benchmark Samples</span>
-              <div className="flex items-center gap-2">
-                {onResetSamples && benchmarkDocs.length < 2 && (
-                  <button
-                    type="button"
-                    onClick={onResetSamples}
-                    className="text-[10px] lowercase text-primary hover:underline font-normal cursor-pointer"
-                    title="Restore default benchmark sample contracts"
-                  >
-                    restore defaults
-                  </button>
-                )}
-                <span>{benchmarkDocs.length}</span>
-              </div>
+          {/* Reset Benchmark Samples Link if any were deleted */}
+          {onResetSamples && totalBenchmarkCount < 4 && (
+            <div className="px-2 pt-1 text-center">
+              <button
+                type="button"
+                onClick={onResetSamples}
+                className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
+              >
+                Restore all 4 benchmark contracts ({4 - totalBenchmarkCount} missing)
+              </button>
             </div>
-
-            {benchmarkDocs.length === 0 ? (
-              <div className="p-3 mx-1 rounded-xl bg-secondary/40 border border-dashed border-border/80 text-center">
-                <p className="text-[11px] text-muted-foreground leading-snug">
-                  Benchmark samples deleted.
-                </p>
-                {onResetSamples && (
-                  <button
-                    type="button"
-                    onClick={onResetSamples}
-                    className="mt-2 text-[10px] font-medium text-foreground underline underline-offset-2 hover:opacity-80 cursor-pointer"
-                  >
-                    Restore sample contracts
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {benchmarkDocs.map((doc) => {
-                  const isActive = doc.id === currentDocId;
-                  const isHighRisk = doc.id === SAMPLE_DOC_A.id;
-                  return (
-                    <div
-                      key={doc.id}
-                      onClick={() => {
-                        onSelectDoc(doc.id);
-                        if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                          onToggle();
-                        }
-                      }}
-                      className={`group relative flex items-center justify-between w-full px-2.5 py-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-secondary text-foreground font-medium shadow-2xs border border-border/80'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
-                        <FileText
-                          size={15}
-                          className={`shrink-0 ${
-                            isActive ? 'text-foreground' : 'text-muted-foreground'
-                          }`}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-xs font-medium text-foreground">
-                            {doc.title.split('—')[0].trim()}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                            <span>{doc.numPages} Pages</span>
-                            <span>·</span>
-                            <span
-                              className={
-                                isHighRisk
-                                  ? 'text-red-600 dark:text-red-400 font-medium'
-                                  : 'text-emerald-600 dark:text-emerald-400 font-medium'
-                              }
-                            >
-                              {isHighRisk ? 'High Risk' : 'Negotiated'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Actions: Active indicator + Delete icon */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        {isActive && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRequestDeleteDoc(doc);
-                          }}
-                          className="p-1.5 rounded-lg text-muted-foreground/80 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-                          title={`Delete "${doc.title.split('—')[0].trim()}"`}
-                          aria-label={`Delete ${doc.title}`}
-                        >
-                          <TrashSimple size={14} weight="bold" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Sidebar Footer: AI Engine Status & Configuration */}

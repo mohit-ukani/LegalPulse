@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   BookmarkSimple,
 } from '@phosphor-icons/react';
-import { ChatMessage, Citation, LegalDocument } from '@/lib/types';
+import { ChatMessage, Citation, LegalDocument, ChallengePersona } from '@/lib/types';
 import { CitationCard } from './CitationCard';
 
 interface GroundedChatProps {
@@ -20,14 +20,23 @@ interface GroundedChatProps {
   activeCitation?: Citation | null;
   externalPrompt?: { text: string; timestamp: number } | string | null;
   apiKey?: string;
+  persona?: ChallengePersona;
 }
 
-const STARTER_PROMPTS = [
+const STARTER_PROMPTS_PROFESSIONAL = [
   'What is the required notice period for resignation, and can I buyout?',
   'Does this agreement contain an employment bond or liquidated damages clawback?',
   'What non-compete restrictions exist post-employment?',
   'Does the company claim my personal weekend projects or open-source code?',
   'What is the company parental leave and paternity policy? (Test Unknown)',
+];
+
+const STARTER_PROMPTS_BUSINESS = [
+  'What is the aggregate liability cap and are consequential damages excluded?',
+  'What are the payment terms, billing dispute windows, and late interest penalties?',
+  'What is the SLA uptime commitment and what credits apply for downtime?',
+  'Does the vendor provide IP infringement indemnification with legal defense?',
+  'What are the termination for convenience terms and transition assistance requirements?',
 ];
 
 export function GroundedChat({
@@ -36,18 +45,33 @@ export function GroundedChat({
   activeCitation,
   externalPrompt,
   apiKey,
+  persona = 'professional',
 }: GroundedChatProps) {
-  const makeWelcomeMessage = (docTitle: string): ChatMessage => ({
-    id: 'welcome',
-    role: 'assistant',
-    content: `Welcome to **LegalPulse Grounded Analysis** for **${docTitle}**. Ask any question regarding your obligations, risks, notice periods, or compensation. Every answer will be grounded with clickable page and clause citations directly linked to the PDF on your left.`,
-    timestamp: 0,
-    suggestedQuestions: [
-      'What are the highest risk clauses in this document?',
-      'What is the notice period and is there a buyout right?',
-      'Does the agreement impose an uncompensated non-compete?',
-    ],
-  });
+  const isBusiness = persona === 'business' || document.id.includes('msa');
+  const starterPrompts = isBusiness ? STARTER_PROMPTS_BUSINESS : STARTER_PROMPTS_PROFESSIONAL;
+
+  const makeWelcomeMessage = React.useCallback(
+    (docTitle: string): ChatMessage => ({
+      id: 'welcome',
+      role: 'assistant',
+      content: isBusiness
+        ? `Welcome to **LegalPulse B2B Intelligence** for **${docTitle}**. Ask any commercial query regarding liability exposure, indemnification, SLA credits, or Net-30 payment remedies. Every answer is grounded with verifiable page and clause citations.`
+        : `Welcome to **LegalPulse Grounded Analysis** for **${docTitle}**. Ask any question regarding your obligations, risks, notice periods, or compensation. Every answer will be grounded with clickable page and clause citations directly linked to the PDF on your left.`,
+      timestamp: 0,
+      suggestedQuestions: isBusiness
+        ? [
+            'What is the liability cap and are damages uncapped?',
+            'What are the payment terms and invoice dispute cure periods?',
+            'What service level credits apply for uptime failure?',
+          ]
+        : [
+            'What are the highest risk clauses in this document?',
+            'What is the notice period and is there a buyout right?',
+            'Does the agreement impose an uncompensated non-compete?',
+          ],
+    }),
+    [isBusiness]
+  );
 
   const [messages, setMessages] = useState<ChatMessage[]>([makeWelcomeMessage(document.title)]);
 
@@ -82,6 +106,7 @@ export function GroundedChat({
           documentId: document.id,
           customDoc: document.id.startsWith('custom-doc-') ? document : undefined,
           apiKey: apiKey && apiKey.trim() ? apiKey.trim() : undefined,
+          persona,
         }),
       });
 
@@ -135,7 +160,7 @@ export function GroundedChat({
   useEffect(() => {
     setMessages([makeWelcomeMessage(document.title)]);
     lastPromptTimestampRef.current = null;
-  }, [document.id, document.title]);
+  }, [document.id, document.title, makeWelcomeMessage]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -293,7 +318,7 @@ export function GroundedChat({
             Suggested Inquiries:
           </div>
           <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            {STARTER_PROMPTS.map((prompt, i) => (
+            {starterPrompts.map((prompt, i) => (
               <button
                 key={i}
                 onClick={() => handleSend(prompt)}

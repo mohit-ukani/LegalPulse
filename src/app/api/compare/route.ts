@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ContractComparisonResult } from '@/lib/types';
-import { SAMPLE_COMPARISON, SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
+import {
+  SAMPLE_COMPARISON,
+  SAMPLE_COMPARISON_BUSINESS,
+  SAMPLE_DOC_A,
+  SAMPLE_DOC_B,
+  SAMPLE_DOC_C,
+  SAMPLE_DOC_D,
+} from '@/lib/sample-data';
 import { queryRateLimiter } from '@/lib/security';
 import { comparisonCache, generateCacheKey } from '@/lib/cache';
 
@@ -36,7 +43,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // For the sample documents, return the rich pre-computed comparison
+    // Handle Business MSA Comparison (Doc C vs Doc D)
+    if (
+      (docAId === SAMPLE_DOC_C.id && docBId === SAMPLE_DOC_D.id) ||
+      (docAId === SAMPLE_DOC_D.id && docBId === SAMPLE_DOC_C.id)
+    ) {
+      const responsePayload = {
+        success: true,
+        comparison: SAMPLE_COMPARISON_BUSINESS,
+        cached: false,
+      };
+      comparisonCache.set(cacheKey, responsePayload);
+      return NextResponse.json(responsePayload);
+    }
+
+    // For the professional sample documents, return the rich pre-computed comparison
     if (
       (docAId === SAMPLE_DOC_A.id && docBId === SAMPLE_DOC_B.id) ||
       (!docAId && !docBId)

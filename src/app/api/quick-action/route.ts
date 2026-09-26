@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuickAction } from '@/lib/gemini-client';
-import { LegalDocument, QuickActionId } from '@/lib/types';
-import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
+import { LegalDocument, QuickActionId, ChallengePersona } from '@/lib/types';
+import { SAMPLE_DOC_A, SAMPLE_DOC_B, SAMPLE_DOC_C, SAMPLE_DOC_D } from '@/lib/sample-data';
 import { queryRateLimiter } from '@/lib/security';
 import { analysisCache, generateCacheKey } from '@/lib/cache';
 
@@ -15,6 +15,10 @@ const VALID_ACTION_IDS: QuickActionId[] = [
   'confidentiality',
   'governing_law',
   'indemnification',
+  'liability_cap',
+  'payment_terms',
+  'service_level',
+  'ip_warranty',
 ];
 
 export async function POST(req: NextRequest) {
@@ -33,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { actionId, documentId, customDoc, apiKey } = body;
+    const { actionId, documentId, customDoc, apiKey, persona } = body;
 
     if (!actionId) {
       return NextResponse.json({ error: 'actionId is required' }, { status: 400 });
@@ -51,14 +55,21 @@ export async function POST(req: NextRequest) {
       doc = customDoc;
     } else if (documentId === SAMPLE_DOC_B.id) {
       doc = SAMPLE_DOC_B;
+    } else if (documentId === SAMPLE_DOC_C.id) {
+      doc = SAMPLE_DOC_C;
+    } else if (documentId === SAMPLE_DOC_D.id) {
+      doc = SAMPLE_DOC_D;
     } else if (documentId === SAMPLE_DOC_A.id) {
       doc = SAMPLE_DOC_A;
     }
+
+    const activePersona: ChallengePersona = persona || doc.persona || 'professional';
 
     // 2. Efficiency Cache Lookup
     const cacheKey = generateCacheKey('quick-action', {
       actionId,
       docId: doc.id,
+      persona: activePersona,
       pagesCount: doc.pages?.length || 0,
     });
 
@@ -70,7 +81,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const result = executeQuickAction(actionId as QuickActionId, doc);
+    const result = executeQuickAction(actionId as QuickActionId, doc, activePersona);
 
     const responsePayload = {
       success: true,

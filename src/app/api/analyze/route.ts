@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryDocumentWithGemini } from '@/lib/gemini-client';
 import { LegalDocument } from '@/lib/types';
-import { SAMPLE_DOC_A, SAMPLE_DOC_B } from '@/lib/sample-data';
+import { SAMPLE_DOC_A, SAMPLE_DOC_B, SAMPLE_DOC_C, SAMPLE_DOC_D } from '@/lib/sample-data';
 import {
   queryRateLimiter,
   detectPromptInjection,
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { query: rawQuery, documentId, customDoc, apiKey } = body;
+    const { query: rawQuery, documentId, customDoc, apiKey, persona } = body;
 
     // 2. Input Sanitization & Boundary Enforcement
     const query = sanitizeLegalInput(rawQuery, 2000);
@@ -57,14 +57,21 @@ export async function POST(req: NextRequest) {
       doc = customDoc;
     } else if (documentId === SAMPLE_DOC_B.id) {
       doc = SAMPLE_DOC_B;
+    } else if (documentId === SAMPLE_DOC_C.id) {
+      doc = SAMPLE_DOC_C;
+    } else if (documentId === SAMPLE_DOC_D.id) {
+      doc = SAMPLE_DOC_D;
     } else if (documentId === SAMPLE_DOC_A.id) {
       doc = SAMPLE_DOC_A;
     }
+
+    const activePersona = persona || doc.persona || 'professional';
 
     // 5. In-Memory Cache Lookup (Efficiency Engine)
     const cacheKey = generateCacheKey('analyze', {
       docId: doc.id,
       docPages: doc.pages?.length || 0,
+      persona: activePersona,
       query: query.toLowerCase().trim(),
     });
 
@@ -77,14 +84,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 6. Execute Grounded Neural Analysis
-    const result = await queryDocumentWithGemini(query, doc, apiKey);
+    // 6. Execute Grounded Neural Analysis with Persona Context
+    const result = await queryDocumentWithGemini(query, doc, apiKey, activePersona);
 
     const responsePayload = {
       success: true,
       query,
       documentId: doc.id,
       documentTitle: doc.title,
+      persona: activePersona,
       answer: result.answer,
       citations: result.citations,
       suggestedQuestions: result.suggestedQuestions,

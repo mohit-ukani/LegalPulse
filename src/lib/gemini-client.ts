@@ -1,8 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Citation, DocumentClause, LegalDocument, QuickActionId, QuickActionResult } from './types';
+import {
+  Citation,
+  DocumentClause,
+  LegalDocument,
+  QuickActionId,
+  QuickActionResult,
+  ChallengePersona,
+} from './types';
 
 // The system prompt strictly enforcing grounding, zero-hallucination, and exact visual citations
 export const LEGAL_SYSTEM_PROMPT = `You are LegalPulse AI, an elite legal intelligence assistant specializing in contract analysis, risk assessment, and clause grounding.
+CHALLENGE VERTICAL: Legal Assistance for all professionals and businesses.
 
 CORE DIRECTIVES & CONSTRAINTS:
 1. TRACEABLE EVIDENCE & CITATIONS: Every claim or finding MUST be accompanied by an exact citation consisting of:
@@ -40,7 +48,8 @@ export function getGeminiClient(customApiKey?: string): GoogleGenerativeAI | nul
 export async function queryDocumentWithGemini(
   query: string,
   doc: LegalDocument,
-  customApiKey?: string
+  customApiKey?: string,
+  persona?: ChallengePersona
 ): Promise<{
   answer: string;
   citations: Citation[];
@@ -49,12 +58,23 @@ export async function queryDocumentWithGemini(
 }> {
   const genAI = getGeminiClient(customApiKey);
 
+  const activePersona: ChallengePersona = persona || doc.persona || 'professional';
+
   // If Gemini API Key is configured, use live Gemini 1.5 Flash!
   if (genAI) {
     try {
+      const personaDirectives =
+        activePersona === 'business'
+          ? `PERSPECTIVE CONTEXT: You are advising a Business / Commercial Vendor / Enterprise.
+- Prioritize: Limitation of liability, mutual consequential damages waivers, aggregate liability caps (e.g., 12 months fees paid), reciprocal indemnities, intellectual property warranties, SLA outage penalty containment, and cash-flow payment terms (Net 30 vs Net 90).
+- Statutory references: Uniform Commercial Code (UCC) Article 2, American Arbitration Association (AAA) Commercial Rules, B2B commercial practices.`
+          : `PERSPECTIVE CONTEXT: You are advising a Working Professional / Employee / Consultant.
+- Prioritize: Individual labor rights, uncompensated non-compete restraints, service bonds and $50k liquidated damages clawbacks, asymmetric 90-day notice periods with buyout bans, off-hours personal IP carve-outs, and equity exercise windows.
+- Statutory references: California Labor Code §16600 & §2870, Section 27 Indian Contract Act 1872, FTC Non-Compete Guidance.`;
+
       const model = genAI.getGenerativeModel({
         model: 'gemini-3.8-flash',
-        systemInstruction: LEGAL_SYSTEM_PROMPT,
+        systemInstruction: `${LEGAL_SYSTEM_PROMPT}\n\n${personaDirectives}`,
         generationConfig: {
           temperature: 0.1,
           responseMimeType: 'application/json',
@@ -73,6 +93,7 @@ export async function queryDocumentWithGemini(
 Title: ${doc.title}
 Document Type: ${doc.documentType}
 Parties: ${doc.parties.join(', ')}
+Active Persona: ${activePersona.toUpperCase()}
 
 DOCUMENT FULL TEXT:
 ${documentContext}
@@ -81,7 +102,7 @@ USER QUESTION:
 "${query}"
 
 INSTRUCTIONS:
-Analyze the document text and respond in the following JSON format:
+Analyze the document text through the perspective of the ${activePersona} persona and respond in the following JSON format:
 {
   "isMissingInfo": boolean (true if the document does NOT contain information answering this question),
   "answer": string (plain English explanation with legal implications),
@@ -116,7 +137,7 @@ Analyze the document text and respond in the following JSON format:
   }
 
   // Deterministic Grounded Engine (for immediate offline evaluation / sample documents)
-  return runDeterministicGroundedSearch(query, doc);
+  return runDeterministicGroundedSearch(query, doc, activePersona);
 }
 
 /**
@@ -124,7 +145,8 @@ Analyze the document text and respond in the following JSON format:
  */
 export function runDeterministicGroundedSearch(
   query: string,
-  doc: LegalDocument
+  doc: LegalDocument,
+  persona?: ChallengePersona
 ): {
   answer: string;
   citations: Citation[];
@@ -337,18 +359,31 @@ export function runDeterministicGroundedSearch(
     }
   }
 
-  // 8. Indemnification & Liability
-  if (normalizedQuery.includes('indemnif') || normalizedQuery.includes('liability') || normalizedQuery.includes('fee shifting') || normalizedQuery.includes('attorney fee') || normalizedQuery.includes('legal cost')) {
-    const indemClauses = allClauses.filter((c) =>
-      c.title.toLowerCase().includes('indemnif') || c.title.toLowerCase().includes('fee') || c.category.toLowerCase().includes('legal exposure') || c.content.toLowerCase().includes('reimburse') || c.content.toLowerCase().includes('attorney')
+  // 8. Limitation of Liability & Consequential Damages (Business Persona Priority)
+  if (
+    normalizedQuery.includes('liability cap') ||
+    normalizedQuery.includes('consequential damages') ||
+    normalizedQuery.includes('limitation of liability') ||
+    normalizedQuery.includes('lost profits') ||
+    normalizedQuery.includes('aggregate liability')
+  ) {
+    const liabClauses = allClauses.filter(
+      (c) =>
+        c.title.toLowerCase().includes('liability') ||
+        c.category.toLowerCase().includes('liability') ||
+        c.content.toLowerCase().includes('consequential damages')
     );
 
-    if (indemClauses.length > 0) {
-      const primary = indemClauses[0];
+    if (liabClauses.length > 0) {
+      const primary = liabClauses[0];
+      const isOnerous =
+        primary.riskLevel === 'high' || primary.content.toLowerCase().includes('uncapped');
       return {
         isMissingInfo: false,
-        answer: `As stated in **${primary.sectionNumber}** (Page ${primary.pageNumber}): "${primary.content}". ${primary.implication} Ensure legal fee shifting is strictly reciprocal so the prevailing party recovers costs, rather than exposing the employee to one-sided corporate legal fees.`,
-        citations: indemClauses.map((c) => ({
+        answer: isOnerous
+          ? `Under **${primary.sectionNumber}** (Page ${primary.pageNumber}), the contract imposes severe asymmetric commercial risk: "${primary.content}". ${primary.implication} In enterprise commercial agreements, an uncapped consequential damages exposure exposes the vendor to fatal lost profit claims; standard market terms require mutual waivers of consequential damages and an aggregate liability ceiling tied to 12 months fees.`
+          : `Under **${primary.sectionNumber}** (Page ${primary.pageNumber}), the contract provides balanced commercial protection: "${primary.content}". ${primary.implication} Both parties agree to waive indirect/consequential damages and aggregate liability is capped at twelve (12) months of fees paid.`,
+        citations: liabClauses.map((c) => ({
           clauseId: c.id,
           pageNumber: c.pageNumber,
           sectionNumber: c.sectionNumber,
@@ -358,9 +393,155 @@ export function runDeterministicGroundedSearch(
           riskLevel: c.riskLevel,
         })),
         suggestedQuestions: [
-          'Is the attorney fee reimbursement clause reciprocal if the employee prevails in a dispute?',
-          'Does the company carry Errors & Omissions (E&O) insurance that shields employees from personal liability?',
+          'Can we insert a mutual waiver of consequential and indirect damages for both parties?',
+          'Will the customer agree to cap aggregate contractual liability at 12 months fees paid?',
+          'Are standard carve-outs like gross negligence and confidentiality strictly circumscribed?',
         ],
+      };
+    }
+  }
+
+  // 9. Payment Terms, Invoicing & Withholding (Business Persona Priority)
+  if (
+    normalizedQuery.includes('payment term') ||
+    normalizedQuery.includes('net 30') ||
+    normalizedQuery.includes('net 90') ||
+    normalizedQuery.includes('invoicing') ||
+    normalizedQuery.includes('withhold') ||
+    normalizedQuery.includes('offset')
+  ) {
+    const paymentClauses = allClauses.filter(
+      (c) =>
+        c.title.toLowerCase().includes('payment') ||
+        c.category.toLowerCase().includes('payment') ||
+        c.content.toLowerCase().includes('net 90') ||
+        c.content.toLowerCase().includes('net 30') ||
+        c.content.toLowerCase().includes('withhold')
+    );
+
+    if (paymentClauses.length > 0) {
+      const primary = paymentClauses[0];
+      const isOnerous =
+        primary.riskLevel === 'high' || primary.content.toLowerCase().includes('net 90');
+      return {
+        isMissingInfo: false,
+        answer: isOnerous
+          ? `According to **${primary.sectionNumber}** (Page ${primary.pageNumber}), the agreement mandates prolonged cash collection terms: "${primary.content}". ${primary.implication} A 90-day payment cycle strains working capital, while unilateral offset rights allow the customer to freeze revenues without third-party validation.`
+          : `As stated in **${primary.sectionNumber}** (Page ${primary.pageNumber}), the payment terms follow standard commercial practice: "${primary.content}". ${primary.implication} Invoices are payable on Net 30 terms with a structured 15-day good-faith dispute notice window.`,
+        citations: paymentClauses.map((c) => ({
+          clauseId: c.id,
+          pageNumber: c.pageNumber,
+          sectionNumber: c.sectionNumber,
+          clauseTitle: c.title,
+          quote: c.content,
+          relevanceExplanation: c.implication,
+          riskLevel: c.riskLevel,
+        })),
+        suggestedQuestions: [
+          'Can payment terms be updated to standard Net 30 days upon invoice receipt?',
+          'Can customer right of offset be restricted to mutually agreed credits or formal dispute resolutions?',
+          'Does the vendor have the right to suspend services if undisputed invoices exceed 60 days overdue?',
+        ],
+      };
+    }
+  }
+
+  // 10. Service Level Agreements (SLAs) & Uptime Penalties (Business Persona Priority)
+  if (
+    normalizedQuery.includes('sla') ||
+    normalizedQuery.includes('uptime') ||
+    normalizedQuery.includes('service level') ||
+    normalizedQuery.includes('outage') ||
+    normalizedQuery.includes('service credit') ||
+    normalizedQuery.includes('latency')
+  ) {
+    const slaClauses = allClauses.filter(
+      (c) =>
+        c.title.toLowerCase().includes('sla') ||
+        c.title.toLowerCase().includes('latency') ||
+        c.category.toLowerCase().includes('service level') ||
+        c.content.toLowerCase().includes('99.9') ||
+        c.content.toLowerCase().includes('availability')
+    );
+
+    if (slaClauses.length > 0) {
+      const primary = slaClauses[0];
+      const isOnerous =
+        primary.riskLevel === 'high' || primary.content.toLowerCase().includes('50%');
+      return {
+        isMissingInfo: false,
+        answer: isOnerous
+          ? `As specified in **${primary.sectionNumber}** (Page ${primary.pageNumber}), the SLA contains severe financial clawbacks: "${primary.content}". ${primary.implication} A 50% monthly billing penalty for minor latency fluctuations creates unacceptable cash flow volatility; market-standard B2B SLAs utilize tiered service credits (5%–20%) as the sole financial remedy.`
+          : `Under **${primary.sectionNumber}** (Page ${primary.pageNumber}), the SLA provides market-standard uptime commitments: "${primary.content}". ${primary.implication} Tiered service credits from 5% to 20% serve as the customer sole and exclusive financial remedy for availability shortfalls.`,
+        citations: slaClauses.map((c) => ({
+          clauseId: c.id,
+          pageNumber: c.pageNumber,
+          sectionNumber: c.sectionNumber,
+          clauseTitle: c.title,
+          quote: c.content,
+          relevanceExplanation: c.implication,
+          riskLevel: c.riskLevel,
+        })),
+        suggestedQuestions: [
+          'Can SLA service credits be made the sole and exclusive remedy for performance downtime?',
+          'Are scheduled maintenance windows and third-party ISP outages properly excluded from uptime calculations?',
+          'Can latency penalties be replaced with monthly availability tiers?',
+        ],
+      };
+    }
+  }
+
+  // 11. Indemnification & Third-Party Claims
+  if (
+    normalizedQuery.includes('indemnif') ||
+    normalizedQuery.includes('hold harmless') ||
+    normalizedQuery.includes('fee shifting') ||
+    normalizedQuery.includes('attorney fee') ||
+    normalizedQuery.includes('legal cost')
+  ) {
+    const indemClauses = allClauses.filter(
+      (c) =>
+        c.title.toLowerCase().includes('indemnif') ||
+        c.title.toLowerCase().includes('fee') ||
+        c.category.toLowerCase().includes('indemnif') ||
+        c.category.toLowerCase().includes('legal exposure') ||
+        c.content.toLowerCase().includes('reimburse') ||
+        c.content.toLowerCase().includes('defend') ||
+        c.content.toLowerCase().includes('attorney')
+    );
+
+    if (indemClauses.length > 0) {
+      const primary = indemClauses[0];
+      const isVendorContract =
+        doc.documentType === 'vendor' || doc.id.includes('msa') || primary.title.toLowerCase().includes('customer');
+      return {
+        isMissingInfo: false,
+        answer: isVendorContract
+          ? `As outlined in **${primary.sectionNumber}** (Page ${primary.pageNumber}): "${primary.content}". ${primary.implication} ${
+              primary.riskLevel === 'high'
+                ? 'Unilateral uncapped indemnity exposes the vendor to open-ended third-party claims without any reciprocal customer defense.'
+                : 'Mutual indemnity ensures balanced risk sharing for software IP infringement and customer data.'
+            }`
+          : `As stated in **${primary.sectionNumber}** (Page ${primary.pageNumber}): "${primary.content}". ${primary.implication} Ensure legal fee shifting is strictly reciprocal so the prevailing party recovers costs, rather than exposing the employee to one-sided corporate legal fees.`,
+        citations: indemClauses.map((c) => ({
+          clauseId: c.id,
+          pageNumber: c.pageNumber,
+          sectionNumber: c.sectionNumber,
+          clauseTitle: c.title,
+          quote: c.content,
+          relevanceExplanation: c.implication,
+          riskLevel: c.riskLevel,
+        })),
+        suggestedQuestions: isVendorContract
+          ? [
+              'Can indemnification obligations be made reciprocal between vendor and customer?',
+              'Is IP infringement indemnification conditioned on prompt written notice and control of defense?',
+              'Does the contract provide standard indemnity carve-outs for customer modifications or unauthorized use?',
+            ]
+          : [
+              'Is the attorney fee reimbursement clause reciprocal if the employee prevails in a dispute?',
+              'Does the company carry Errors & Omissions (E&O) insurance that shields employees from personal liability?',
+            ],
       };
     }
   }
@@ -428,15 +609,24 @@ export function runDeterministicGroundedSearch(
     };
   }
 
+  const activePersona: ChallengePersona =
+    persona || doc.persona || (doc.id.includes('msa') ? 'business' : 'professional');
+
   // Fallback if truly not in document
   return {
     isMissingInfo: true,
     answer: `The uploaded document does not contain information regarding your query. The document has been searched across all ${doc.numPages} pages, and no matching clauses or definitions were identified.`,
     citations: [],
-    suggestedQuestions: [
-      'Is there a separate Offer Letter, Employee Handbook, or Benefit Schedule covering this matter?',
-      'Would you like to ask about Notice Periods, Non-Compete restrictions, Service Bonds, or IP Assignment?',
-    ],
+    suggestedQuestions:
+      activePersona === 'business'
+        ? [
+            'Is there an external Statement of Work (SOW), SLA Schedule, or Order Form covering this matter?',
+            'Would you like to ask about Liability Caps, Net-30 Payment Terms, SLA Credits, or IP Warranties?',
+          ]
+        : [
+            'Is there a separate Offer Letter, Employee Handbook, or Benefit Schedule covering this matter?',
+            'Would you like to ask about Notice Periods, Non-Compete restrictions, Service Bonds, or IP Assignment?',
+          ],
   };
 }
 
@@ -445,7 +635,8 @@ export function runDeterministicGroundedSearch(
  */
 export function executeQuickAction(
   actionId: QuickActionId,
-  doc: LegalDocument
+  doc: LegalDocument,
+  persona?: ChallengePersona
 ): QuickActionResult {
   switch (actionId) {
     case 'notice_period': {
@@ -877,6 +1068,78 @@ export function executeQuickAction(
     }
 
     case 'indemnification': {
+      const isVendorDoc =
+        doc.documentType === 'vendor' || doc.id.includes('msa') || persona === 'business';
+      if (isVendorDoc) {
+        const isFair =
+          doc.id.includes('v2') || doc.title.includes('Revised') || doc.title.includes('Fair');
+        if (isFair) {
+          return {
+            actionId,
+            title: 'Mutual & Reciprocal IP Indemnification',
+            status: 'found',
+            plainEnglishSummary:
+              'Balanced bilateral indemnity: Vendor defends Customer against third-party claims alleging software IP infringement; Customer defends Vendor against claims arising from Customer Data.',
+            legalImplications:
+              'Fair risk allocation. Aligns defense obligations with each party respective responsibilities without one-sided indemnity exposure.',
+            riskRating: 'low',
+            citations: [
+              {
+                pageNumber: 3,
+                sectionNumber: 'Section 5.1 & 5.2',
+                clauseTitle: 'Mutual Intellectual Property Indemnification',
+                quote:
+                  'Vendor shall defend and indemnify Customer against direct third-party judgments... Customer shall defend and indemnify Vendor against third-party claims arising from Customer Data.',
+                relevanceExplanation:
+                  'Enforces bilateral indemnity protection for both vendor and customer.',
+                riskLevel: 'low',
+              },
+            ],
+            suggestedLegalQuestions: [
+              'Are indemnification obligations subject to prompt written notification and sole control of defense?',
+              'Does the contract provide standard indemnity exclusions for customer modifications or unauthorized combinations?',
+            ],
+            actionableNextSteps: [
+              'Ensure commercial Errors & Omissions (E&O) insurance covers intellectual property defense obligations.',
+            ],
+            personaPerspective: 'business',
+          };
+        }
+        return {
+          actionId,
+          title: 'Unilateral Uncapped Customer Indemnification',
+          status: 'found',
+          plainEnglishSummary:
+            'Vendor must defend, indemnify, and hold harmless Customer, its affiliates, officers, and agents against ANY and all third-party claims, settlements, and attorney fees, with ZERO reciprocal protection from Customer.',
+          legalImplications:
+            'Severe asymmetric commercial exposure. Vendor acts as an uncompensated insurer for Customer, bearing litigation costs even when Customer contributory negligence was involved.',
+          riskRating: 'high',
+          citations: [
+            {
+              pageNumber: 3,
+              sectionNumber: 'Section 5.1 & 5.2',
+              clauseTitle: 'Unilateral Vendor Indemnification with Zero Customer Reciprocity',
+              quote:
+                'Vendor shall defend, indemnify, and hold harmless Customer... from and against any and all third-party claims, demands, liabilities, losses, damages, settlements, judgments, and legal expenses... Customer provides no indemnification to Vendor.',
+              relevanceExplanation:
+                'Forces vendor to assume one-sided open-ended defense liabilities.',
+              riskLevel: 'high',
+            },
+          ],
+          suggestedLegalQuestions: [
+            'Can Section 5 be made strictly bilateral so each party indemnifies for its own direct breach and IP infringement?',
+            'Will Customer agree to cap indemnification liabilities under the general aggregate liability ceiling?',
+            'Can we add standard carve-outs for customer contributory negligence and unauthorized software alterations?',
+          ],
+          actionableNextSteps: [
+            'Insist on mutual indemnification language before executing the agreement.',
+            'Never accept uncapped indemnification for general breach of contract.',
+          ],
+          personaPerspective: 'business',
+        };
+      }
+
+      // Employment Document Handling (Doc A / Doc B)
       const isDocB = doc.id.includes('v2') || doc.title.includes('Revised');
       if (isDocB) {
         return {
@@ -893,8 +1156,10 @@ export function executeQuickAction(
               pageNumber: 4,
               sectionNumber: 'Section 8.1 - 8.3',
               clauseTitle: 'Pre-Dispute Mediation & Bilateral Attorney Fee Recovery',
-              quote: 'Parties agree to thirty (30) days of good faith commercial mediation... Arbitrator appointed jointly by mutual written consent... The prevailing party in any dispute shall be awarded reasonable attorney fees.',
-              relevanceExplanation: 'Guarantees mutual arbitrator selection and two-way cost reimbursement.',
+              quote:
+                'Parties agree to thirty (30) days of good faith commercial mediation... Arbitrator appointed jointly by mutual written consent... The prevailing party in any dispute shall be awarded reasonable attorney fees.',
+              relevanceExplanation:
+                'Guarantees mutual arbitrator selection and two-way cost reimbursement.',
               riskLevel: 'low',
             },
           ],
@@ -904,6 +1169,7 @@ export function executeQuickAction(
           actionableNextSteps: [
             'Retain documentation of all mutual communications should any dispute arise.',
           ],
+          personaPerspective: 'professional',
         };
       }
       return {
@@ -920,8 +1186,10 @@ export function executeQuickAction(
             pageNumber: 4,
             sectionNumber: 'Section 8.3',
             clauseTitle: 'One-Sided Company Legal Fee Reimbursement',
-            quote: 'In the event Company prevails in any enforcement proceeding, Employee shall reimburse all legal costs, court filing fees, and external attorney fees incurred by Company.',
-            relevanceExplanation: 'Imposes severe asymmetric financial liability on the employee.',
+            quote:
+              'In the event Company prevails in any enforcement proceeding, Employee shall reimburse all legal costs, court filing fees, and external attorney fees incurred by Company.',
+            relevanceExplanation:
+              'Imposes severe asymmetric financial liability on the employee.',
             riskLevel: 'high',
           },
         ],
@@ -932,6 +1200,290 @@ export function executeQuickAction(
         actionableNextSteps: [
           'Insist that any attorney fee shifting clause be strictly bilateral / reciprocal.',
         ],
+        personaPerspective: 'professional',
+      };
+    }
+
+    case 'liability_cap': {
+      const isFair =
+        doc.id.includes('v2') || doc.title.includes('Revised') || doc.title.includes('Fair');
+      if (isFair) {
+        return {
+          actionId,
+          title: 'Mutual Consequential Damages Waiver & 12-Month Liability Cap',
+          status: 'found',
+          plainEnglishSummary:
+            'Both parties agree to a mutual waiver of consequential and indirect damages, with total aggregate contractual liability strictly capped at the fees paid in the prior 12 months.',
+          legalImplications:
+            'Market-standard enterprise risk containment. Eliminates catastrophic exposure from lost profit claims while maintaining proportionate commercial accountability.',
+          riskRating: 'low',
+          citations: [
+            {
+              pageNumber: 3,
+              sectionNumber: 'Section 6.1 & 6.2',
+              clauseTitle: 'Mutual Consequential Damages Waiver & 12-Month Liability Cap',
+              quote:
+                'NEITHER PARTY SHALL BE LIABLE FOR INDIRECT OR CONSEQUENTIAL DAMAGES... AGGREGATE LIABILITY STRICTLY LIMITED TO FEES PAID IN PRECEDING 12 MONTHS.',
+              relevanceExplanation:
+                'Enforces symmetrical liability caps and eliminates lost profit claims.',
+              riskLevel: 'low',
+            },
+          ],
+          suggestedLegalQuestions: [
+            'Does the 12-month liability cap apply per-SOW or across the entire master agreement?',
+            'Are any exceptions to the cap strictly limited to gross negligence and intentional fraud?',
+          ],
+          actionableNextSteps: [
+            'Confirm commercial general liability insurance limits meet or exceed the 12-month contract value.',
+          ],
+          personaPerspective: 'business',
+        };
+      }
+      return {
+        actionId,
+        title: 'Uncapped Vendor Consequential Damages & Asymmetric Liability Cap',
+        status: 'found',
+        plainEnglishSummary:
+          'Extreme liability asymmetry: Vendor is exposed to uncapped consequential damages, lost profits, and business interruption, while Customer liability is capped at a nominal $1,000.',
+        legalImplications:
+          'Fatal enterprise exposure. A brief system downtime could lead to catastrophic lost-profit claims exceeding millions of dollars, with zero reciprocal liability on the customer.',
+        riskRating: 'high',
+        citations: [
+          {
+            pageNumber: 3,
+            sectionNumber: 'Section 6.1 & 6.2',
+            clauseTitle: 'Uncapped Vendor Consequential Damages & $1,000 Customer Cap',
+            quote:
+              'VENDOR SHALL REMAIN FULLY LIABLE FOR ALL CONSEQUENTIAL DAMAGES, LOST PROFITS... Customer aggregate liability shall be strictly capped at $1,000.',
+            relevanceExplanation:
+              'Creates open-ended catastrophic liability solely for the vendor.',
+            riskLevel: 'high',
+          },
+        ],
+        suggestedLegalQuestions: [
+          'Will the customer agree to a standard mutual waiver of consequential damages and lost profits?',
+          'Can we establish a mutual aggregate liability cap equal to fees paid in the prior 12 months?',
+          'Under UCC Article 2, can an unconscionably asymmetric liability cap be struck down in commercial court?',
+        ],
+        actionableNextSteps: [
+          'Demand a bilateral waiver of consequential damages in Section 6.1 before proceeding.',
+          'Replace the $1,000 customer cap with a mutual 12-month contract value liability ceiling.',
+        ],
+        personaPerspective: 'business',
+      };
+    }
+
+    case 'payment_terms': {
+      const isFair =
+        doc.id.includes('v2') || doc.title.includes('Revised') || doc.title.includes('Fair');
+      if (isFair) {
+        return {
+          actionId,
+          title: 'Standard Net 30 Invoicing & 15-Day Dispute Protocol',
+          status: 'found',
+          plainEnglishSummary:
+            'Predictable Net 30 payment schedule. Invoices must be disputed in writing within 15 days of receipt, and undisputed amounts must be paid on time.',
+          legalImplications:
+            'Healthy cash flow predictability. Customer cannot freeze entire invoice disbursements on vague, undocumented oral objections.',
+          riskRating: 'low',
+          citations: [
+            {
+              pageNumber: 1,
+              sectionNumber: 'Section 2.1 & 2.2',
+              clauseTitle: 'Standard Net 30 Payment Terms with 15-Day Dispute Protocol',
+              quote:
+                'Customer shall pay all undisputed invoices within thirty (30) days... notify Vendor in writing within 15 days of good faith dispute.',
+              relevanceExplanation:
+                'Enforces standard commercial payment timeline and dispute notice rules.',
+              riskLevel: 'low',
+            },
+          ],
+          suggestedLegalQuestions: [
+            'What specific electronic invoicing portal or billing contact is designated for invoice delivery?',
+          ],
+          actionableNextSteps: [
+            'Establish automated invoice delivery tracking to verify the 30-day timeline upon receipt.',
+          ],
+          personaPerspective: 'business',
+        };
+      }
+      return {
+        actionId,
+        title: 'Net 90 Extended Payment Terms & Unilateral Fee Withholding',
+        status: 'found',
+        plainEnglishSummary:
+          'Prolonged Net 90 payment cycle with a 60-day invoice waiver forfeiture clause and unilateral customer rights to offset and withhold fees without late payment interest.',
+        legalImplications:
+          'Severe working capital drag. Net 90 forces you to finance customer operations for three months, while arbitrary offset rights let customer withhold cash flow at will.',
+        riskRating: 'high',
+        citations: [
+          {
+            pageNumber: 1,
+            sectionNumber: 'Section 2.1 & 2.2',
+            clauseTitle: 'Net 90 Extended Payment Terms & 60-Day Invoice Forfeiture',
+            quote:
+              'Customer shall remit undisputed payment within ninety (90) calendar days ("Net 90")... Invoices submitted after 60 days shall be deemed permanently waived and uncollectible.',
+            relevanceExplanation:
+              'Forces 90-day collection cycle and risks total revenue forfeiture after 60 days.',
+            riskLevel: 'high',
+          },
+          {
+            pageNumber: 1,
+            sectionNumber: 'Section 2.3',
+            clauseTitle: 'Unilateral Fee Withholding and Zero Late Payment Interest',
+            quote:
+              'Customer reserves absolute right to withhold, deduct, and offset against any Vendor invoices any sums claimed by Customer... Disputed sums shall not incur late interest fees.',
+            relevanceExplanation:
+              'Permits customer to unilaterally freeze earned payments without validation.',
+            riskLevel: 'high',
+          },
+        ],
+        suggestedLegalQuestions: [
+          'Can payment terms be shortened to commercial standard Net 30 or Net 45?',
+          'Can the 60-day invoice forfeiture clause be struck out or extended to 180 days?',
+          'Will the customer agree that offset rights apply only to formal audit findings or mutual agreement?',
+        ],
+        actionableNextSteps: [
+          'Propose amending Section 2.1 to Net 30 days upon invoice receipt.',
+          'Eliminate unilateral offset rights and require prompt settlement of undisputed amounts.',
+        ],
+        personaPerspective: 'business',
+      };
+    }
+
+    case 'service_level': {
+      const isFair =
+        doc.id.includes('v2') || doc.title.includes('Revised') || doc.title.includes('Fair');
+      if (isFair) {
+        return {
+          actionId,
+          title: 'Realistic 99.9% Uptime SLA & Tiered Service Credits',
+          status: 'found',
+          plainEnglishSummary:
+            'Achievable 99.9% monthly uptime target with structured tiered service credits (5% to 20%) established as the customer sole and exclusive financial remedy for availability shortfalls.',
+          legalImplications:
+            'Commercial SLA balance. Ensures meaningful service accountability while safeguarding provider from surprise revenue clawbacks or catastrophic breach claims.',
+          riskRating: 'low',
+          citations: [
+            {
+              pageNumber: 4,
+              sectionNumber: 'Section 7.1 & 7.2',
+              clauseTitle: 'Fair Tiered SLA Credits as Exclusive Remedy',
+              quote:
+                'Tiered service credits from 5% to 20%... constitute Customer sole and exclusive financial remedy for uptime failures.',
+              relevanceExplanation:
+                'Caps maximum SLA downtime financial remedy at 20% credit.',
+              riskLevel: 'low',
+            },
+          ],
+          suggestedLegalQuestions: [
+            'Are scheduled maintenance windows and third-party ISP transit failures excluded from uptime calculations?',
+          ],
+          actionableNextSteps: [
+            'Integrate automated uptime telemetry to generate monthly SLA verification reports.',
+          ],
+          personaPerspective: 'business',
+        };
+      }
+      return {
+        actionId,
+        title: 'Disproportionate 50% Monthly Invoice Penalty for Sub-Second Latency',
+        status: 'found',
+        plainEnglishSummary:
+          'Draconian SLA penalty: A transient 15-minute network latency spike above 250ms entitles the customer to an immediate 50% deduction of the entire monthly billing invoice, without limiting customer right to terminate for breach.',
+        legalImplications:
+          'Severe revenue volatility. Cloud network latency fluctuates due to upstream ISP transit; forfeiting 50% of monthly revenues for 15 minutes of jitter is commercially uninsurable.',
+        riskRating: 'high',
+        citations: [
+          {
+            pageNumber: 4,
+            sectionNumber: 'Section 7.1 & 7.2',
+            clauseTitle: 'Severe 50% Monthly Invoice Deduction for 15-Min Latency',
+            quote:
+              'latency exceeds 250ms for more than fifteen (15) consecutive minutes, Customer shall be entitled to an immediate 50% credit reduction of the total monthly billing invoice.',
+            relevanceExplanation:
+              'Punitive financial clawback triggered by transient latency.',
+            riskLevel: 'high',
+          },
+        ],
+        suggestedLegalQuestions: [
+          'Can SLA penalties be tiered from 5% to 20% and made the exclusive remedy for performance downtime?',
+          'Can latency measurements be averaged over a full rolling 24-hour window rather than 15 minutes?',
+          'Is force majeure or third-party cloud provider degradation explicitly carved out from SLA penalties?',
+        ],
+        actionableNextSteps: [
+          'Insist that service credits are capped at 15–20% and serve as the exclusive financial remedy.',
+          'Carve out upstream transit provider outages from SLA calculations.',
+        ],
+        personaPerspective: 'business',
+      };
+    }
+
+    case 'ip_warranty': {
+      const isFair =
+        doc.id.includes('v2') || doc.title.includes('Revised') || doc.title.includes('Fair');
+      if (isFair) {
+        return {
+          actionId,
+          title: 'Protection of Vendor Background IP & Customer License Grant',
+          status: 'found',
+          plainEnglishSummary:
+            'Vendor retains full ownership of its pre-existing core Background IP, generic algorithms, and SaaS platforms, granting Customer a non-exclusive license for internal business use.',
+          legalImplications:
+            'Protects vendor core business assets. Prevents a single client from claiming exclusive ownership of tools and software modules you use across all customers.',
+          riskRating: 'low',
+          citations: [
+            {
+              pageNumber: 2,
+              sectionNumber: 'Section 3.2 & 3.3',
+              clauseTitle: 'Protection of Vendor Core Background IP & Customer License Grant',
+              quote:
+                'Vendor retains all right, title, and ownership in Vendor pre-existing software... Vendor grants Customer perpetual non-exclusive internal license.',
+              relevanceExplanation:
+                'Vendor retains proprietary codebase and grants customer non-exclusive license.',
+              riskLevel: 'low',
+            },
+          ],
+          suggestedLegalQuestions: [
+            'Does the license grant allow Customer third-party contractors to use the software on Customer behalf?',
+          ],
+          actionableNextSteps: [
+            'Maintain a documented schedule of Background IP assets prior to project kickoff.',
+          ],
+          personaPerspective: 'business',
+        };
+      }
+      return {
+        actionId,
+        title: 'Overbroad Background IP Forfeiture & Work-for-Hire Assignment',
+        status: 'found',
+        plainEnglishSummary:
+          'Comprehensive assignment: Vendor transfers all proprietary copyright ownership of its pre-existing background code, tools, and infrastructure scripts to Customer under a broad "work made for hire" clause.',
+        legalImplications:
+          'Catastrophic intellectual property loss. You could be legally barred from reusing your own foundational software modules or architecture patterns with any other customer.',
+        riskRating: 'high',
+        citations: [
+          {
+            pageNumber: 2,
+            sectionNumber: 'Section 3.1 & 3.2',
+            clauseTitle: 'Overbroad Background IP Transfer as Work-for-Hire',
+            quote:
+              'Vendor hereby transfers and assigns full proprietary copyright ownership of such underlying assets to Customer, without reserving reusable core software rights.',
+            relevanceExplanation:
+              'Forces complete transfer of vendor pre-existing software assets.',
+            riskLevel: 'high',
+          },
+        ],
+        suggestedLegalQuestions: [
+          'Can we replace the assignment of Background IP with an express retention clause and non-exclusive customer license?',
+          'Will Customer agree that work-for-hire applies only to custom bespoke configuration scripts developed uniquely for Customer?',
+          'Can we insert a standard carve-out for general industry knowledge, reusable libraries, and tools?',
+        ],
+        actionableNextSteps: [
+          'Strike Section 3.2 and insert standard vendor background IP retention language.',
+          'Grant Customer a perpetual non-exclusive license instead of transferring ownership.',
+        ],
+        personaPerspective: 'business',
       };
     }
 

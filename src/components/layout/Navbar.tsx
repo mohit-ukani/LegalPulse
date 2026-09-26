@@ -14,8 +14,10 @@ import {
   DownloadSimple,
   TrashSimple,
   SidebarSimple,
+  Briefcase,
+  Buildings,
 } from '@phosphor-icons/react';
-import { LegalDocument } from '@/lib/types';
+import { LegalDocument, ChallengePersona } from '@/lib/types';
 
 interface NavbarProps {
   currentDoc?: LegalDocument | null;
@@ -30,6 +32,8 @@ interface NavbarProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   apiKeySet: boolean;
+  activePersona?: ChallengePersona;
+  onSelectPersona?: (persona: ChallengePersona) => void;
 }
 
 export function Navbar({
@@ -45,6 +49,8 @@ export function Navbar({
   onToggleSidebar,
   isSidebarOpen,
   apiKeySet,
+  activePersona = 'professional',
+  onSelectPersona,
 }: NavbarProps) {
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -243,6 +249,42 @@ export function Navbar({
               <span className="hidden xl:inline">Versions</span>
             </button>
           </div>
+
+          {/* Persona Switcher: Professional vs Business */}
+          {onSelectPersona && (
+            <div className="flex bg-secondary/80 p-0.5 rounded-lg border border-border/70 shrink-0" role="radiogroup" aria-label="Target persona perspective">
+              <button
+                type="button"
+                onClick={() => onSelectPersona('professional')}
+                role="radio"
+                aria-checked={activePersona === 'professional'}
+                className={`px-2 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activePersona === 'professional'
+                    ? 'bg-card text-foreground shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Professional Context: Employee labor rights, non-competes, and fair notice"
+              >
+                <Briefcase size={12} weight={activePersona === 'professional' ? 'bold' : 'regular'} className={activePersona === 'professional' ? 'text-emerald-500' : ''} />
+                <span className="hidden lg:inline">Professional</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelectPersona('business')}
+                role="radio"
+                aria-checked={activePersona === 'business'}
+                className={`px-2 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activePersona === 'business'
+                    ? 'bg-card text-foreground shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Business Context: Enterprise MSAs, liability caps, SLA uptime, and indemnity"
+              >
+                <Buildings size={12} weight={activePersona === 'business' ? 'bold' : 'regular'} className={activePersona === 'business' ? 'text-sky-500' : ''} />
+                <span className="hidden lg:inline">Business</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right side controls */}

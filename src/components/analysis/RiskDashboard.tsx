@@ -12,22 +12,27 @@ import {
   Copy,
   Check,
 } from '@phosphor-icons/react';
-import { Citation, LegalDocument, RiskAnalysisReport, DocumentClause } from '@/lib/types';
-import { SAMPLE_RISK_REPORT_A } from '@/lib/sample-data';
+import { Citation, LegalDocument, RiskAnalysisReport, DocumentClause, ChallengePersona } from '@/lib/types';
+import { SAMPLE_RISK_REPORT_A, SAMPLE_RISK_REPORT_C } from '@/lib/sample-data';
 
 interface RiskDashboardProps {
   document: LegalDocument;
   onCitationClick: (citation: Citation) => void;
   onOpenExport?: () => void;
+  persona?: ChallengePersona;
 }
 
-// Recommended balanced counter-clauses for common contractual red flags
+// Recommended balanced counter-clauses for common contractual red flags (Professional & Business)
 const COUNTER_CLAUSE_TEMPLATES: Record<string, string> = {
   'notice_period': 'Either party may terminate employment by giving thirty (30) calendar days prior written notice. Employee may elect to terminate immediately by paying basic salary in lieu of notice.',
   'service_bond': 'There shall be no mandatory service lock-in, training bond, or liquidated damages clawback. Any third-party direct certification expenses exceeding $2,500 shall be amortized on a pro-rata 6-month schedule.',
   'non_compete': 'For a period of six (6) months post-separation, Employee agrees not to accept employment with direct primary competitors explicitly listed in Annexure A. During this period, Company shall pay 100% of Employee\'s base salary as garden leave compensation.',
   'ip_assignment': 'Company ownership applies solely to inventions created during regular working hours using Company equipment that directly relate to Company\'s business. All personal off-hours coding and pre-existing open-source contributions remain the exclusive property of Employee.',
   'governing_law': 'This Agreement shall be governed by local labor laws of Employee\'s jurisdiction of residence. The parties agree to confidential mediation prior to initiating binding arbitration.',
+  'liability_cap': 'In no event shall either party\'s total aggregate liability under this Agreement exceed the total fees paid or payable by Customer in the twelve (12) months preceding the claim. Neither party shall be liable for indirect, incidental, or consequential damages.',
+  'payment_terms': 'Customer shall pay undisputed invoices within Net-30 days of invoice receipt. In the event of a good-faith billing dispute, Customer shall provide written notice within fifteen (15) days, and undisputed amounts shall be paid timely without interest penalties.',
+  'service_level': 'Vendor warrants 99.9% monthly uptime. If uptime falls below 99.9%, Vendor shall issue pro-rata service fee credits against the subsequent monthly invoice as Customer\'s sole and exclusive remedy, without unilateral customer termination for minor service interruptions.',
+  'ip_warranty': 'Vendor warrants that the Deliverables and Services do not infringe any valid patent, copyright, trademark, or trade secret of any third party. Vendor shall indemnify and defend Customer against third-party infringement claims, subject to prompt written notification.',
 };
 
 function getCounterClauseFor(clause: DocumentClause): string {
@@ -37,16 +42,48 @@ function getCounterClauseFor(clause: DocumentClause): string {
   if (text.includes('non-compete') || text.includes('compete') || text.includes('garden')) return COUNTER_CLAUSE_TEMPLATES.non_compete;
   if (text.includes('intellectual') || text.includes('invention') || text.includes('copyright') || text.includes('proprietary')) return COUNTER_CLAUSE_TEMPLATES.ip_assignment;
   if (text.includes('arbitration') || text.includes('governing') || text.includes('jurisdiction')) return COUNTER_CLAUSE_TEMPLATES.governing_law;
-  return `Request reciprocal bilateral terms for ${clause.sectionNumber}: rights and obligations must apply equally to both Employer and Employee.`;
+  if (text.includes('liability') || text.includes('aggregate') || text.includes('consequential') || text.includes('cap')) return COUNTER_CLAUSE_TEMPLATES.liability_cap;
+  if (text.includes('payment') || text.includes('invoice') || text.includes('net-') || text.includes('dispute') || text.includes('late fee')) return COUNTER_CLAUSE_TEMPLATES.payment_terms;
+  if (text.includes('service level') || text.includes('sla') || text.includes('uptime') || text.includes('credit')) return COUNTER_CLAUSE_TEMPLATES.service_level;
+  if (text.includes('warranty') || text.includes('infringement') || text.includes('indemnif')) return COUNTER_CLAUSE_TEMPLATES.ip_warranty;
+  return `Request reciprocal bilateral terms for ${clause.sectionNumber}: rights and obligations must apply equally to both parties.`;
 }
 
-export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskDashboardProps) {
+export function RiskDashboard({ document, onCitationClick, onOpenExport, persona }: RiskDashboardProps) {
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [copiedClauseId, setCopiedClauseId] = useState<string | null>(null);
 
-  const isDocB = document.id.includes('v2') || document.title.includes('Revised');
+  const isDocB = document.id === 'doc-apex-emp-v2' || document.title.includes('Revised');
+  const isDocC = document.id === 'doc-enterprise-msa-v1' || document.title.includes('Enterprise Master Services Agreement (Onerous');
+  const isDocD = document.id === 'doc-enterprise-msa-v2' || document.title.includes('Enterprise Master Services Agreement (B2B Fair');
 
   const report: RiskAnalysisReport = React.useMemo(() => {
+    if (isDocC) {
+      return SAMPLE_RISK_REPORT_C;
+    }
+
+    if (isDocD) {
+      return {
+        overallRisk: 'low',
+        riskScore: 28,
+        executiveVerdict:
+          'FAIR & BALANCED B2B STANDARD: This revised Enterprise MSA establishes commercially reasonable bilateral standards: a mutual liability cap equal to 12 months fees paid ($250,000 max), Net-30 payment terms with 15-day good-faith dispute cure periods, service fee SLA credits for uptime below 99.9%, and comprehensive IP non-infringement warranties with vendor indemnification defense.',
+        highRiskCount: 0,
+        mediumRiskCount: 3,
+        lowRiskCount: 7,
+        clauses: document.pages.flatMap((p) => p.clauses || []),
+        criticalWarnings: [
+          'Verify that monthly uptime monitoring reports are audited by an independent third-party status dashboard.',
+          'Ensure the 15-day dispute cure notification timeframe aligns with accounts payable operational schedules.',
+        ],
+        recommendedNegotiations: [
+          'Include a reciprocal cyber-insurance requirement of $5,000,000 for SOC2 compliance verification.',
+          'Confirm that SLA credit calculations apply automatically without requiring burdensome manual claims.',
+        ],
+        persona: 'business',
+      };
+    }
+
     if (isDocB) {
       return {
         overallRisk: 'low',
@@ -65,6 +102,7 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
           'Confirm no separate undertakings or bond letters are presented during HR onboarding.',
           'Ensure health insurance continuation during severance is specified in writing.',
         ],
+        persona: 'professional',
       };
     }
 
@@ -147,8 +185,9 @@ export function RiskDashboard({ document, onCitationClick, onOpenExport }: RiskD
       clauses: allClauses,
       criticalWarnings: warnings.slice(0, 5),
       recommendedNegotiations: negotiations.slice(0, 5),
+      persona: persona || (isDocC || isDocD ? 'business' : 'professional'),
     };
-  }, [document, isDocB]);
+  }, [document, isDocB, isDocC, isDocD, persona]);
 
   const isHighRisk = report.overallRisk === 'high';
   const isMediumRisk = report.overallRisk === 'medium';

@@ -14,7 +14,7 @@ import {
   Copy,
   Check,
 } from '@phosphor-icons/react';
-import { Citation, LegalDocument, QuickActionId, QuickActionResult } from '@/lib/types';
+import { Citation, LegalDocument, QuickActionId, QuickActionResult, ChallengePersona } from '@/lib/types';
 import { QuickActionChips } from './QuickActionChips';
 import { CitationCard } from './CitationCard';
 import { GroundedChat } from './GroundedChat';
@@ -29,6 +29,7 @@ interface AnalysisWorkspaceProps {
   apiKey?: string;
   externalPrompt?: { text: string; timestamp: number } | null;
   onOpenExport?: () => void;
+  activePersona?: ChallengePersona;
 }
 
 export function AnalysisWorkspace({
@@ -39,9 +40,14 @@ export function AnalysisWorkspace({
   apiKey,
   externalPrompt,
   onOpenExport,
+  activePersona = 'professional',
 }: AnalysisWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<'quick_actions' | 'chat' | 'risk' | 'multilingual'>('quick_actions');
-  const [activeActionId, setActiveActionId] = useState<QuickActionId | null>('notice_period');
+  const defaultAction: QuickActionId =
+    document.id.includes('msa') || activePersona === 'business'
+      ? 'liability_cap'
+      : 'notice_period';
+  const [activeActionId, setActiveActionId] = useState<QuickActionId | null>(defaultAction);
   const [actionResult, setActionResult] = useState<QuickActionResult | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [chatPromptToInject, setChatPromptToInject] = useState<{ text: string; timestamp: number } | null>(null);
@@ -73,6 +79,7 @@ export function AnalysisWorkspace({
           documentId: document.id,
           customDoc: document.id.startsWith('custom-doc-') ? document : undefined,
           apiKey: apiKey && apiKey.trim() ? apiKey.trim() : undefined,
+          persona: activePersona,
         }),
       });
 
@@ -89,13 +96,17 @@ export function AnalysisWorkspace({
     } finally {
       setActionLoading(false);
     }
-  }, [document, apiKey]);
+  }, [document, apiKey, activePersona]);
 
-  // Auto-run initial quick action on doc load ONLY once per document
+  // Auto-run initial quick action on doc load or persona change ONLY once per document
   React.useEffect(() => {
-    handleSelectQuickAction('notice_period');
+    const actionToRun: QuickActionId =
+      document.id.includes('msa') || activePersona === 'business'
+        ? 'liability_cap'
+        : 'notice_period';
+    handleSelectQuickAction(actionToRun);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [document.id]);
+  }, [document.id, activePersona]);
 
   const handleAskInChat = (questionText: string) => {
     setChatPromptToInject({ text: questionText, timestamp: Date.now() });
@@ -203,6 +214,7 @@ export function AnalysisWorkspace({
               onSelectAction={handleSelectQuickAction}
               activeActionId={activeActionId}
               loading={actionLoading}
+              activePersona={activePersona}
             />
 
             {/* Quick Action Result Details Card */}
@@ -357,6 +369,7 @@ export function AnalysisWorkspace({
             activeCitation={activeCitation}
             externalPrompt={chatPromptToInject}
             apiKey={apiKey}
+            persona={activePersona}
           />
         )}
 
@@ -366,6 +379,7 @@ export function AnalysisWorkspace({
             document={document}
             onCitationClick={onCitationClick}
             onOpenExport={onOpenExport}
+            persona={activePersona}
           />
         )}
 

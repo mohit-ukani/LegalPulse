@@ -1,12 +1,70 @@
-import { LegalDocument, QuickActionItem, RiskAnalysisReport, ContractComparisonResult } from './types';
+import {
+  LegalDocument,
+  QuickActionItem,
+  RiskAnalysisReport,
+  ContractComparisonResult,
+  ChallengePersona,
+  PersonaContext,
+} from './types';
+
+export const PERSONA_CONFIGS: Record<ChallengePersona, PersonaContext> = {
+  professional: {
+    id: 'professional',
+    label: 'Working Professional',
+    badge: 'Labor & Career Protection',
+    tagline: 'Employees, Tech Workers, Freelancers & Consultants',
+    description:
+      'Engineered to safeguard individual career mobility, protect personal intellectual property, eliminate coercive service bonds, and negotiate equitable severance and notice terms.',
+    primaryAgreements: [
+      'Employment Contracts',
+      'Independent Contractor Agreements',
+      'Stock Option Plans & Equity Grants',
+      'Employee Non-Disclosure Agreements (NDAs)',
+    ],
+    keyRiskPriorities: [
+      'Uncompensated 24-Month Non-Competes',
+      'Service Bonds & $50,000 Liquidated Damages Clawbacks',
+      'Asymmetric 90-Day Notice Periods with Buyout Bans',
+      'Overbroad Off-Hours Inventions & Moonlighting Claims',
+      '30-Day Accelerated Stock Option Forfeiture Traps',
+    ],
+    statutoryFramework:
+      'California Labor Code §16600 & §2870, Section 27 Indian Contract Act 1872, FTC Non-Compete Ruling, UK Restraint of Trade Doctrine',
+  },
+  business: {
+    id: 'business',
+    label: 'Business & Commercial Vendor',
+    badge: 'Enterprise Commercial Defense',
+    tagline: 'Startups, SMBs, Commercial Vendors & Procurement Teams',
+    description:
+      'Engineered to protect commercial balance sheets, cap catastrophic consequential liabilities, ensure reciprocal indemnities, establish enforceable SLA bounds, and optimize cash-flow payment cycles.',
+    primaryAgreements: [
+      'Master Services Agreements (MSA)',
+      'SaaS Terms of Service & Subscription Agreements',
+      'Vendor Statements of Work (SOW)',
+      'Commercial Procurement & Enterprise Sales Terms',
+    ],
+    keyRiskPriorities: [
+      'Uncapped Consequential Damages & Lost Profit Exposure',
+      'One-Sided Unilateral Customer Indemnification',
+      'Disproportionate 50% Invoice Deduction SLA Outage Penalties',
+      'Net 90 Invoicing Cycles with Unilateral Withholding Rights',
+      'Exclusive Out-of-State Litigation Forums with Asymmetric Legal Fees',
+    ],
+    statutoryFramework:
+      'Uniform Commercial Code (UCC) Article 2, American Arbitration Association (AAA) Commercial Rules, B2B Standard Contract Practice',
+  },
+};
 
 export const QUICK_ACTIONS: QuickActionItem[] = [
+  // --- Professional Persona Focus Workflows ---
   {
     id: 'notice_period',
-    label: 'Notice Period',
+    label: 'Notice Period & Buyout',
     iconName: 'Clock',
     description: 'Notice duration, buyout options, and garden leave obligations',
     defaultPrompt: 'What is the required notice period for resignation and termination, and are there buyout or garden leave clauses?',
+    targetPersona: 'professional',
   },
   {
     id: 'non_compete',
@@ -14,6 +72,7 @@ export const QUICK_ACTIONS: QuickActionItem[] = [
     iconName: 'ShieldWarning',
     description: 'Post-employment restrictions, geographical scope, and duration',
     defaultPrompt: 'What non-compete, non-solicitation, and post-employment restrictions exist in this agreement?',
+    targetPersona: 'professional',
   },
   {
     id: 'bond_terms',
@@ -21,6 +80,7 @@ export const QUICK_ACTIONS: QuickActionItem[] = [
     iconName: 'CurrencyDollar',
     description: 'Employment service bonds, liquidated damages, and clawbacks',
     defaultPrompt: 'Does this contract contain an employment bond, lock-in period, training reimbursement, or financial clawback clause?',
+    targetPersona: 'professional',
   },
   {
     id: 'compensation',
@@ -28,6 +88,7 @@ export const QUICK_ACTIONS: QuickActionItem[] = [
     iconName: 'Coins',
     description: 'Fixed CTC, bonus discretion, equity vesting, and forfeiture rules',
     defaultPrompt: 'Detail the compensation structure, variable bonus eligibility, and stock option vesting or forfeiture terms.',
+    targetPersona: 'professional',
   },
   {
     id: 'termination',
@@ -35,6 +96,7 @@ export const QUICK_ACTIONS: QuickActionItem[] = [
     iconName: 'WarningCircle',
     description: 'Grounds for termination, severance rights, and immediate discharge terms',
     defaultPrompt: 'What are the conditions for termination with and without cause, and what severance pay is guaranteed?',
+    targetPersona: 'professional',
   },
   {
     id: 'ip_rights',
@@ -42,6 +104,49 @@ export const QUICK_ACTIONS: QuickActionItem[] = [
     iconName: 'Lightbulb',
     description: 'Ownership of side projects, pre-existing code, and invention assignment',
     defaultPrompt: 'What are the intellectual property assignment terms, and does it claim personal projects developed on off-hours?',
+    targetPersona: 'professional',
+  },
+
+  // --- Business Persona Focus Workflows ---
+  {
+    id: 'liability_cap',
+    label: 'Liability Cap & Damages',
+    iconName: 'ShieldWarning',
+    description: 'Consequential damages waivers and overall contractual liability caps',
+    defaultPrompt: 'What are the limitation of liability terms, consequential damages waivers, and aggregate liability caps?',
+    targetPersona: 'business',
+  },
+  {
+    id: 'indemnification',
+    label: 'Indemnity & Hold Harmless',
+    iconName: 'FileText',
+    description: 'Third-party claim defense obligations, reciprocity, and carve-outs',
+    defaultPrompt: 'What are the indemnification and hold harmless obligations, and are they reciprocal or unilateral?',
+    targetPersona: 'both',
+  },
+  {
+    id: 'payment_terms',
+    label: 'Payment Terms & Invoicing',
+    iconName: 'CurrencyDollar',
+    description: 'Net payment cycles, invoice dispute rights, and withholding traps',
+    defaultPrompt: 'What are the invoicing timelines, net payment terms, late fees, and customer withholding rights?',
+    targetPersona: 'business',
+  },
+  {
+    id: 'service_level',
+    label: 'SLA & Uptime Penalties',
+    iconName: 'Clock',
+    description: 'Uptime guarantees, outage penalties, and service credit remedies',
+    defaultPrompt: 'What are the service level agreements (SLAs), uptime commitments, and financial penalty credits?',
+    targetPersona: 'business',
+  },
+  {
+    id: 'ip_warranty',
+    label: 'IP Warranties & Infringement',
+    iconName: 'Lightbulb',
+    description: 'Infringement indemnification, IP warranties, and remedy caps',
+    defaultPrompt: 'Does the vendor warrant non-infringement, and what are the indemnification remedies for third-party claims?',
+    targetPersona: 'business',
   },
   {
     id: 'confidentiality',
@@ -49,20 +154,15 @@ export const QUICK_ACTIONS: QuickActionItem[] = [
     iconName: 'Lock',
     description: 'Non-disclosure obligations, trade secret scope, and post-exit duration',
     defaultPrompt: 'What are the confidentiality and non-disclosure obligations, and how long do they survive termination?',
+    targetPersona: 'both',
   },
   {
     id: 'governing_law',
-    label: 'Governing Law & Jurisdiction',
+    label: 'Governing Law & Forum',
     iconName: 'Scales',
     description: 'Applicable courts, mandatory arbitration, and dispute resolution',
     defaultPrompt: 'What is the governing jurisdiction, and does it enforce mandatory binding arbitration or waive jury trials?',
-  },
-  {
-    id: 'indemnification',
-    label: 'Liability & Indemnity',
-    iconName: 'FileText',
-    description: 'Personal liability exposure and indemnification requirements',
-    defaultPrompt: 'Does the employee bear personal liability or indemnification obligations for company losses?',
+    targetPersona: 'both',
   },
 ];
 
@@ -74,6 +174,7 @@ export const SAMPLE_DOC_A: LegalDocument = {
   numPages: 4,
   uploadedAt: '2026-09-22T10:00:00Z',
   documentType: 'employment',
+  persona: 'professional',
   parties: ['Apex Cloud Technologies Inc. (Employer)', 'Alex Morgan (Employee)'],
   effectiveDate: 'October 1, 2026',
   jurisdiction: 'Delaware / Bangalore Exclusive Jurisdiction',
@@ -274,6 +375,7 @@ export const SAMPLE_DOC_B: LegalDocument = {
   numPages: 4,
   uploadedAt: '2026-09-22T11:30:00Z',
   documentType: 'employment',
+  persona: 'professional',
   parties: ['Apex Cloud Technologies Inc. (Employer)', 'Alex Morgan (Employee)'],
   effectiveDate: 'October 1, 2026',
   jurisdiction: 'Mutual Jurisdiction / Balanced Mediation',
@@ -577,4 +679,473 @@ export const SAMPLE_COMPARISON: ContractComparisonResult = {
     'Section 5.4(b): Immediate Termination for Cause on Subjective Quarterly KPI Shortfalls',
     'Section 8.2: Unilateral Company-Selected Arbitrator Clause',
   ],
+  personaPerspective: 'professional',
 };
+
+export const SAMPLE_DOC_C: LegalDocument = {
+  id: 'doc-cloudscale-msa-v1',
+  title: 'CloudScale Data Systems — Enterprise Cloud Infrastructure MSA (Original Vendor Onerous)',
+  filename: 'CloudScale_Enterprise_MSA_2026_Standard.pdf',
+  fileUrl: '/samples/sample-msa-v1.pdf',
+  numPages: 4,
+  uploadedAt: '2026-09-23T09:00:00Z',
+  documentType: 'vendor',
+  persona: 'business',
+  parties: [
+    'Global Logistics Enterprise Corp. ("Customer")',
+    'CloudScale Data Systems Inc. ("Vendor" / "Service Provider")',
+  ],
+  effectiveDate: 'November 1, 2026',
+  jurisdiction: 'Exclusive Jurisdiction of State and Federal Courts in Wilmington, Delaware',
+  summary:
+    'An enterprise Master Services Agreement (MSA) containing extreme commercial exposure for the technology vendor: uncapped consequential and indirect damages, unilateral uncapped customer indemnification, Net 90 payment cycles with customer withholding rights, aggressive SLA outage deductions (50% monthly invoice clawback), and asymmetric attorney fee recovery.',
+  pages: [
+    {
+      pageNumber: 1,
+      text: `MASTER SERVICES AGREEMENT (ENTERPRISE STANDARD)
+
+THIS MASTER SERVICES AGREEMENT is made effective November 1, 2026 (the "Effective Date") by and between:
+1. GLOBAL LOGISTICS ENTERPRISE CORP., a Delaware corporation with offices at 1200 Commerce Blvd, Suite 800 ("Customer"); and
+2. CLOUDSCALE DATA SYSTEMS INC., a Delaware corporation with offices at 450 Innovation Way ("Vendor").
+
+SECTION 1: SERVICES AND STATEMENTS OF WORK (SOW)
+1.1 Engagement: Vendor shall deliver managed distributed database clustering, cloud pipeline synchronization, and high-availability telemetry infrastructure as detailed in Statements of Work executed hereunder.
+1.2 Standard of Performance: Vendor warrants that all Services and Deliverables shall strictly conform to Customer specifications and be performed in accordance with highest industry standards without interruption or defect.
+1.3 Conflict of Terms: In the event of any conflict between this Agreement and any Statement of Work or Vendor order form, the terms of this Agreement and Customer purchase orders shall unconditionally prevail.
+
+SECTION 2: FEES, INVOICING, AND PAYMENT TERMS
+2.1 Payment Term: Customer shall remit undisputed payment within ninety (90) calendar days ("Net 90") following receipt of a valid and correct itemized invoice from Vendor.
+2.2 Invoice Submission Window: Vendor must submit all invoices within sixty (60) days of Service delivery. Invoices submitted after 60 days shall be deemed permanently waived and uncollectible.
+2.3 Right of Offset and Disputed Withholding: Customer reserves the absolute right to withhold, deduct, and offset against any Vendor invoices any sums claimed by Customer for alleged performance deficiencies, SLA credits, or damages. Disputed sums shall not incur late interest fees.`,
+      clauses: [
+        {
+          id: 'c-msa-2-1',
+          pageNumber: 1,
+          sectionNumber: 'Section 2.1 & 2.2',
+          title: 'Net 90 Extended Payment Terms & Invoicing Forfeiture',
+          content: 'Customer shall remit undisputed payment within ninety (90) calendar days ("Net 90")... Invoices submitted after 60 days shall be deemed permanently waived and uncollectible.',
+          riskLevel: 'high',
+          category: 'Cash Flow & Payment Terms',
+          implication: 'Severe working capital strain on Vendor. A 90-day collection cycle strains cash flow, while a 60-day invoice submission forfeiture creates accidental revenue loss risk.',
+        },
+        {
+          id: 'c-msa-2-3',
+          pageNumber: 1,
+          sectionNumber: 'Section 2.3',
+          title: 'Unilateral Fee Withholding and Zero Late Payment Interest',
+          content: 'Customer reserves absolute right to withhold, deduct, and offset against any Vendor invoices any sums claimed by Customer... Disputed sums shall not incur late interest fees.',
+          riskLevel: 'high',
+          category: 'Commercial Dispute Risk',
+          implication: 'Customer can freeze operational cash flow indefinitely on unilateral assertion of dissatisfaction, depriving Vendor of immediate revenue.',
+        },
+      ],
+    },
+    {
+      pageNumber: 2,
+      text: `SECTION 3: INTELLECTUAL PROPERTY AND DELIVERABLES
+3.1 Customer Ownership: Customer shall exclusively own all right, title, and interest worldwide in and to all Deliverables, code, scripts, configurations, schemas, and documentation developed under this Agreement as a "work made for hire."
+3.2 Comprehensive Background IP Transfer: To the extent any pre-existing software, generic utilities, or Vendor background tooling are incorporated into Deliverables, Vendor hereby transfers and assigns full proprietary copyright ownership of such underlying assets to Customer, without reserving reusable core software rights.
+3.3 Non-Assertion Covenant: Vendor covenants not to assert any intellectual property right, patent, or proprietary claim against Customer or Customer affiliates for any technology deployed under this Agreement.
+
+SECTION 4: WARRANTIES AND COMPLIANCE
+4.1 Absolute Warranty of Continuous Operation: Vendor warrants that the cloud infrastructure shall operate 100% error-free and uninterrupted. Vendor shall promptly cure any defect within four (4) hours at Vendor sole expense.
+4.2 Express Warranty of Non-Infringement: Vendor warrants that no Services, software components, open-source libraries, or Deliverables infringe or misappropriate any patent, copyright, trademark, or trade secret of any third party worldwide.`,
+      clauses: [
+        {
+          id: 'c-msa-3-2',
+          pageNumber: 2,
+          sectionNumber: 'Section 3.2',
+          title: 'Overbroad Background IP Forfeiture & Work-for-Hire Assignment',
+          content: 'Vendor hereby transfers and assigns full proprietary copyright ownership of such underlying assets to Customer, without reserving reusable core software rights.',
+          riskLevel: 'high',
+          category: 'Intellectual Property',
+          implication: 'Catastrophic IP risk: Vendor risks assigning its own core proprietary software and underlying code libraries to the customer, impairing Vendor ability to service other clients.',
+        },
+        {
+          id: 'c-msa-4-1',
+          pageNumber: 2,
+          sectionNumber: 'Section 4.1',
+          title: 'Unrealistic Zero-Defect Operational Warranty',
+          content: 'Vendor warrants that the cloud infrastructure shall operate 100% error-free and uninterrupted. Vendor shall promptly cure any defect within four (4) hours at Vendor sole expense.',
+          riskLevel: 'medium',
+          category: 'Warranties',
+          implication: 'Unrealistic strict liability standard for complex cloud systems. Standard commercial SaaS terms warrant material conformance, not absolute error-free operation.',
+        },
+      ],
+    },
+    {
+      pageNumber: 3,
+      text: `SECTION 5: INDEMNIFICATION AND DEFENSE OF CLAIMS
+5.1 Unilateral Vendor Indemnification: Vendor shall defend, indemnify, and hold harmless Customer, its parent, affiliates, directors, officers, employees, and agents from and against any and all third-party claims, demands, liabilities, losses, damages, settlements, judgments, and legal expenses (including full outside attorney fees) arising out of or related to: (a) any alleged breach of this Agreement, (b) any claim of intellectual property infringement, (c) any data security incident, or (d) any act or omission of Vendor or its subcontractors.
+5.2 Absence of Customer Reciprocal Indemnity: Customer provides no indemnification to Vendor for Customer data, third-party software furnished by Customer, or Customer contributory negligence.
+
+SECTION 6: LIMITATION OF LIABILITY
+6.1 Uncapped Vendor Consequential Damages: IN NO EVENT SHALL CUSTOMER BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. HOWEVER, THIS EXCLUSION SHALL NOT APPLY TO VENDOR, AND VENDOR SHALL REMAIN FULLY LIABLE FOR ALL CONSEQUENTIAL DAMAGES, LOST PROFITS, LOST REVENUE, AND BUSINESS INTERRUPTION SUFFERED BY CUSTOMER.
+6.2 Asymmetric Aggregate Liability Cap: Customer aggregate cumulative liability under this Agreement shall be strictly capped at $1,000. Vendor liability under this Agreement shall be completely uncapped for indemnification, confidentiality breaches, and data security incidents.`,
+      clauses: [
+        {
+          id: 'c-msa-5-1',
+          pageNumber: 3,
+          sectionNumber: 'Section 5.1 & 5.2',
+          title: 'Unilateral Uncapped Customer Indemnification',
+          content: 'Vendor shall defend, indemnify, and hold harmless Customer... from all claims, damages, settlements, and legal expenses... Customer provides no indemnification to Vendor.',
+          riskLevel: 'high',
+          category: 'Indemnification & Exposure',
+          implication: 'One-sided indemnity exposes Vendor to existential financial ruin for third-party claims without any reciprocal customer protection or liability containment.',
+        },
+        {
+          id: 'c-msa-6-1',
+          pageNumber: 3,
+          sectionNumber: 'Section 6.1 & 6.2',
+          title: 'Asymmetric Liability Cap & Uncapped Vendor Consequential Damages',
+          content: 'VENDOR SHALL REMAIN FULLY LIABLE FOR ALL CONSEQUENTIAL DAMAGES, LOST PROFITS, AND BUSINESS INTERRUPTION... Customer aggregate liability shall be strictly capped at $1,000.',
+          riskLevel: 'high',
+          category: 'Limitation of Liability',
+          implication: 'Fatal enterprise risk: A minor outage could expose Vendor to millions of dollars in claimed customer lost profits, while Customer liability is restricted to a nominal $1,000.',
+        },
+      ],
+    },
+    {
+      pageNumber: 4,
+      text: `SECTION 7: SERVICE LEVEL AGREEMENTS (SLA) AND DOWNTIME CREDITS
+7.1 Uptime Requirement: Vendor covenants a monthly Service Availability of 99.99% twenty-four (24) hours per day, excluding scheduled maintenance.
+7.2 Severe Penalty Clawback: If availability falls below 99.9% in any calendar month, or if latency exceeds 250ms for more than fifteen (15) consecutive minutes, Customer shall be entitled to an immediate 50% credit reduction of the total monthly billing invoice, without limiting Customer right to terminate for breach.
+
+SECTION 8: TERM, TERMINATION, AND DISPUTE RESOLUTION
+8.1 Term: This Agreement commences on the Effective Date and continues for an initial period of thirty-six (36) months.
+8.2 Unilateral Customer Termination for Convenience: Customer may terminate this Agreement or any Statement of Work in whole or in part at any time, for any reason or no reason, upon seven (7) days prior written notice, without paying any early termination fee, wind-down cost, or unamortized infrastructure expenditure.
+8.3 Vendor Termination Restriction: Vendor shall have no right to terminate for convenience and may terminate only for undisputed non-payment after ninety (90) days written notice and sixty (60) days cure opportunity.
+8.4 Governing Law and Forum: Governed exclusively by the laws of Delaware. Any litigation shall be conducted in state or federal court in Wilmington, Delaware. In the event Customer prevails in any litigation, Vendor shall reimburse Customer for all litigation expenses and outside counsel fees.`,
+      clauses: [
+        {
+          id: 'c-msa-7-2',
+          pageNumber: 4,
+          sectionNumber: 'Section 7.2',
+          title: 'Disproportionate 50% Monthly Invoice Penalty for Sub-Second Latency',
+          content: 'latency exceeds 250ms for more than 15 minutes, Customer shall be entitled to immediate 50% credit reduction of total monthly billing invoice.',
+          riskLevel: 'high',
+          category: 'Service Level Agreement',
+          implication: 'Draconian SLA penalty: A transient 15-minute network latency spike wipes out 50% of the entire monthly revenue for all infrastructure services.',
+        },
+        {
+          id: 'c-msa-8-2',
+          pageNumber: 4,
+          sectionNumber: 'Section 8.2',
+          title: 'Unilateral 7-Day Customer Termination for Convenience Without Wind-Down',
+          content: 'Customer may terminate this Agreement at any time, for any reason... upon seven (7) days prior written notice, without paying any early termination fee or wind-down cost.',
+          riskLevel: 'high',
+          category: 'Contract Termination',
+          implication: 'Customer can cancel on 7 days notice after Vendor provisions dedicated cloud infrastructure, leaving Vendor with heavy unamortized capital and hosting commitments.',
+        },
+        {
+          id: 'c-msa-8-4',
+          pageNumber: 4,
+          sectionNumber: 'Section 8.4',
+          title: 'One-Sided Litigation Fee Shifting in Delaware Courts',
+          content: 'In the event Customer prevails in any litigation, Vendor shall reimburse Customer for all litigation expenses and outside counsel fees.',
+          riskLevel: 'medium',
+          category: 'Legal Dispute',
+          implication: 'Asymmetric litigation risk in distant Delaware courts. Forces Vendor to bear litigation risk without reciprocal attorney fee recovery if Vendor successfully defends claims.',
+        },
+      ],
+    },
+  ],
+};
+
+export const SAMPLE_DOC_D: LegalDocument = {
+  id: 'doc-cloudscale-msa-v2',
+  title: 'CloudScale Data Systems — Enterprise Cloud Infrastructure MSA (Negotiated Fair B2B Standard)',
+  filename: 'CloudScale_Enterprise_MSA_2026_Fair_Negotiated.pdf',
+  fileUrl: '/samples/sample-msa-v2.pdf',
+  numPages: 4,
+  uploadedAt: '2026-09-23T14:30:00Z',
+  documentType: 'vendor',
+  persona: 'business',
+  parties: [
+    'Global Logistics Enterprise Corp. ("Customer")',
+    'CloudScale Data Systems Inc. ("Vendor" / "Service Provider")',
+  ],
+  effectiveDate: 'November 1, 2026',
+  jurisdiction: 'Neutral Commercial Arbitration (American Arbitration Association - AAA)',
+  summary:
+    'A balanced, market-standard enterprise Master Services Agreement (MSA) incorporating mutual commercial protections: standard Net 30 payment terms with 15-day dispute notice, retention of vendor background IP with non-exclusive customer license, mutual indemnification for third-party IP claims, aggregate liability capped at 12 months fees with mutual waiver of consequential damages, and tiered SLA credits.',
+  pages: [
+    {
+      pageNumber: 1,
+      text: `REVISED MASTER SERVICES AGREEMENT (BALANCED B2B STANDARD)
+Effective Date: November 1, 2026
+Between: GLOBAL LOGISTICS ENTERPRISE CORP. ("Customer") and CLOUDSCALE DATA SYSTEMS INC. ("Vendor")
+
+SECTION 1: ENGAGEMENT AND STATEMENTS OF WORK
+1.1 Scope: Vendor delivers managed distributed database clustering and pipeline sync as agreed in mutually executed SOWs.
+1.2 Conformance: Vendor warrants Services perform in all material respects with written specifications.
+1.3 Harmonization: Any SOW terms that explicitly reference and amend Agreement provisions shall govern for that SOW.
+
+SECTION 2: INVOICING AND BALANCED PAYMENT TERMS
+2.1 Net 30 Terms: Customer shall pay all undisputed invoices within thirty (30) days of receipt ("Net 30").
+2.2 Invoice Dispute Procedure: Customer shall notify Vendor in writing within fifteen (15) days of invoice receipt describing any good faith dispute. Undisputed balances shall be paid promptly on schedule.
+2.3 Statutory Interest: Overdue undisputed amounts accrue interest at the lesser of 1.0% per month or maximum legal rate.`,
+      clauses: [
+        {
+          id: 'c-v2-msa-2-1',
+          pageNumber: 1,
+          sectionNumber: 'Section 2.1 & 2.2',
+          title: 'Standard Net 30 Payment Terms with 15-Day Dispute Protocol',
+          content: 'Customer shall pay all undisputed invoices within thirty (30) days... notify Vendor in writing within 15 days of good faith dispute.',
+          riskLevel: 'low',
+          category: 'Payment Terms',
+          implication: 'Fair commercial standard ensuring healthy cash flow predictability while safeguarding customer right to dispute bona fide errors.',
+        },
+      ],
+    },
+    {
+      pageNumber: 2,
+      text: `SECTION 3: INTELLECTUAL PROPERTY AND LICENSING
+3.1 Customer Data and Deliverables: Customer retains all right, title, and interest in Customer Data and custom configuration scripts created uniquely for Customer.
+3.2 Vendor Background Technology: Vendor retains all right, title, and ownership in Vendor pre-existing software, generic code libraries, algorithms, architectures, and SaaS platforms ("Background IP").
+3.3 Non-Exclusive License: Vendor grants Customer a perpetual, non-exclusive, worldwide license to utilize Background IP embedded in Deliverables solely for Customer internal business operations.
+
+SECTION 4: WARRANTIES AND REMEDIES
+4.1 Material Conformance Warranty: Vendor warrants that Services shall substantially conform to published documentation.
+4.2 Exclusive Remedy: In the event of material defect, Vendor sole obligation and Customer exclusive remedy is commercially reasonable re-performance or pro-rata fee refund.`,
+      clauses: [
+        {
+          id: 'c-v2-msa-3-2',
+          pageNumber: 2,
+          sectionNumber: 'Section 3.2 & 3.3',
+          title: 'Protection of Vendor Core Background IP & Customer License Grant',
+          content: 'Vendor retains all right, title, and ownership in Vendor pre-existing software... Vendor grants Customer perpetual non-exclusive internal license.',
+          riskLevel: 'low',
+          category: 'Intellectual Property',
+          implication: 'Protects Vendor core software assets from forfeiture while delivering full operational autonomy to Customer.',
+        },
+      ],
+    },
+    {
+      pageNumber: 3,
+      text: `SECTION 5: MUTUAL INDEMNIFICATION
+5.1 Vendor IP Indemnity: Vendor shall defend and indemnify Customer against direct third-party judgments holding that Vendor software infringes a valid copyright or patent, provided Customer gives prompt written notice.
+5.2 Customer Indemnity: Customer shall defend and indemnify Vendor against third-party claims arising from Customer Data or unauthorized modifications.
+5.3 Defense Control: Indemnifying party has right to control defense with counsel of its choice.
+
+SECTION 6: MUTUAL LIMITATION OF LIABILITY
+6.1 Mutual Consequential Damages Waiver: NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOSS OF PROFITS, LOSS OF REVENUE, OR DATA LOSS.
+6.2 Mutual Aggregate Liability Cap: EXCEPT FOR GROSS NEGLIGENCE OR BREACH OF CONFIDENTIALITY, EACH PARTY TOTAL AGGREGATE LIABILITY ARISING UNDER THIS AGREEMENT SHALL BE STRICTLY LIMITED TO THE TOTAL FEES PAID OR PAYABLE BY CUSTOMER IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.`,
+      clauses: [
+        {
+          id: 'c-v2-msa-5-1',
+          pageNumber: 3,
+          sectionNumber: 'Section 5.1 & 5.2',
+          title: 'Mutual & Symmetrical Intellectual Property Indemnification',
+          content: 'Vendor indemnifies Customer against direct IP infringement... Customer indemnifies Vendor against claims arising from Customer Data.',
+          riskLevel: 'low',
+          category: 'Indemnification',
+          implication: 'Balanced reciprocal protection aligning defense obligations with each party respective responsibilities.',
+        },
+        {
+          id: 'c-v2-msa-6-1',
+          pageNumber: 3,
+          sectionNumber: 'Section 6.1 & 6.2',
+          title: 'Mutual Consequential Damages Waiver & 12-Month Liability Cap',
+          content: 'NEITHER PARTY SHALL BE LIABLE FOR INDIRECT OR CONSEQUENTIAL DAMAGES... AGGREGATE LIABILITY STRICTLY LIMITED TO FEES PAID IN PRECEDING 12 MONTHS.',
+          riskLevel: 'low',
+          category: 'Limitation of Liability',
+          implication: 'Gold standard B2B commercial risk protection: Caps maximum catastrophic downside for both parties to actual fees paid.',
+        },
+      ],
+    },
+    {
+      pageNumber: 4,
+      text: `SECTION 7: SERVICE LEVEL AGREEMENTS (SLA) AND CREDITS
+7.1 Uptime Target: Vendor commits to 99.9% monthly availability, excluding scheduled maintenance windows.
+7.2 Tiered Service Credits:
+- 99.0% to 99.89%: 5% monthly Service credit.
+- 98.0% to 98.99%: 10% monthly Service credit.
+- Below 98.0%: 20% monthly Service credit.
+Service credits constitute Customer sole and exclusive financial remedy for uptime failures.
+
+SECTION 8: TERMINATION AND DISPUTE RESOLUTION
+8.1 Termination for Convenience: Either party may terminate on sixty (60) days written notice. Customer shall reimburse Vendor for Services rendered plus unavoidable committed third-party cloud hosting costs incurred.
+8.2 Commercial Arbitration: Disputes unresolved after thirty (30) days executive negotiation shall be resolved by binding arbitration under American Arbitration Association (AAA) Commercial Rules in a neutral forum.
+8.3 Bilateral Attorney Fees: The prevailing party in any formal arbitration shall be awarded reasonable outside attorney fees and costs.`,
+      clauses: [
+        {
+          id: 'c-v2-msa-7-2',
+          pageNumber: 4,
+          sectionNumber: 'Section 7.2',
+          title: 'Fair Tiered SLA Credits as Exclusive Remedy',
+          content: 'Tiered service credits from 5% to 20%... constitute Customer sole and exclusive financial remedy for uptime failures.',
+          riskLevel: 'low',
+          category: 'Service Level Agreement',
+          implication: 'Fair B2B remedy: Prevents catastrophic revenue loss while providing meaningful accountability for performance.',
+        },
+        {
+          id: 'c-v2-msa-8-1',
+          pageNumber: 4,
+          sectionNumber: 'Section 8.1 & 8.3',
+          title: '60-Day Termination with Wind-Down Coverage & Neutral AAA Arbitration',
+          content: 'Either party may terminate on 60 days notice with reimbursement for committed cloud costs... Binding arbitration under AAA Commercial Rules with bilateral attorney fees.',
+          riskLevel: 'low',
+          category: 'Dispute Resolution & Exit',
+          implication: 'Prevents stranded infrastructure costs and guarantees a neutral dispute forum with reciprocal fee recovery.',
+        },
+      ],
+    },
+  ],
+};
+
+export const SAMPLE_RISK_REPORT_C: RiskAnalysisReport = {
+  overallRisk: 'high',
+  riskScore: 92,
+  executiveVerdict:
+    'CRITICAL COMMERCIAL RISK: This Master Services Agreement contains severe B2B enterprise liabilities that threaten corporate solvency. Key red flags include uncapped consequential damages against the Vendor with a nominal $1,000 Customer liability cap, unilateral and uncapped Customer indemnification, Net 90 payment terms with unilateral fee offset rights, and a disproportionate 50% monthly invoice clawback for minor latency fluctuations.',
+  highRiskCount: 6,
+  mediumRiskCount: 2,
+  lowRiskCount: 1,
+  clauses: SAMPLE_DOC_C.pages.flatMap((p) => p.clauses),
+  criticalWarnings: [
+    'Section 6.1 leaves Vendor exposed to uncapped consequential damages and lost profits, while Section 6.2 caps Customer liability at just $1,000.',
+    'Section 5.1 forces unilateral and uncapped Vendor indemnification for all third-party claims without any Customer reciprocity.',
+    'Section 3.2 transfers ownership of Vendor pre-existing background IP and reusable software utilities to Customer as a work-for-hire.',
+    'Section 7.2 imposes an extreme 50% monthly billing penalty for latency exceeding 250ms for more than 15 minutes.',
+    'Section 2.1 forces Net 90 payment cycles with Section 2.3 granting Customer unilateral rights to withhold and offset fees without late interest.',
+  ],
+  recommendedNegotiations: [
+    'Insert a mutual waiver of consequential damages and cap aggregate liability at 12 months fees paid under the contract.',
+    'Make indemnification strictly mutual and limited to third-party claims of direct intellectual property infringement.',
+    'Carve out Vendor pre-existing Background IP and grant Customer a non-exclusive license instead of full copyright assignment.',
+    'Replace the 50% SLA penalty with market-standard tiered service credits (5%–20%) as the sole and exclusive financial remedy.',
+    'Shorten payment terms to Net 30 and require 15 days written notice for good-faith invoice disputes.',
+  ],
+  personaPerspective: 'business',
+};
+
+export const SAMPLE_COMPARISON_BUSINESS: ContractComparisonResult = {
+  docAId: SAMPLE_DOC_C.id,
+  docBId: SAMPLE_DOC_D.id,
+  titleA: 'Enterprise MSA (Original Vendor Onerous)',
+  titleB: 'Enterprise MSA (Negotiated Fair B2B Standard)',
+  summary:
+    'Version 2 eliminates existential enterprise commercial risks for the technology provider by capping aggregate liability at 12 months fees, introducing mutual consequential damages waivers, protecting vendor background IP, establishing standard Net 30 payment terms, and replacing punitive 50% invoice clawbacks with market-standard tiered SLA credits.',
+  overallRiskShift: 'lower_risk',
+  strategicAdvice: [
+    'Version 2 eliminates uncapped consequential damages and caps total liability at 12 months fees paid (Section 6.1 & 6.2).',
+    'Version 2 establishes mutual indemnification for IP infringement, replacing unilateral customer indemnification (Section 5.1 & 5.2).',
+    'Version 2 protects Vendor background IP assets and grants a non-exclusive customer license instead of assigning ownership (Section 3.2 & 3.3).',
+    'Version 2 converts Net 90 payment terms to Net 30 with structured 15-day dispute notifications (Section 2.1 & 2.2).',
+    'Version 2 replaces 50% revenue deductions with structured 5%–20% service credits as the exclusive uptime remedy (Section 7.2).',
+  ],
+  differences: [
+    {
+      category: 'Limitation of Liability',
+      term: 'Consequential Damages & Aggregate Liability Cap',
+      inDocA: 'Vendor uncapped for consequential damages and lost profits; Customer liability capped at $1,000.',
+      inDocB: 'Mutual waiver of consequential damages; aggregate liability for both parties capped at 12 months fees paid.',
+      riskDelta: 'improved',
+      analysis: 'Shields Vendor from catastrophic lost profit claims and restores symmetrical liability limits.',
+      citationA: {
+        pageNumber: 3,
+        sectionNumber: 'Section 6.1 & 6.2',
+        quote: 'VENDOR SHALL REMAIN FULLY LIABLE FOR ALL CONSEQUENTIAL DAMAGES, LOST PROFITS... Customer liability capped at $1,000.',
+        relevanceExplanation: 'Severe asymmetric liability exposure.',
+        riskLevel: 'high',
+      },
+      citationB: {
+        pageNumber: 3,
+        sectionNumber: 'Section 6.1 & 6.2',
+        quote: 'NEITHER PARTY SHALL BE LIABLE FOR INDIRECT OR CONSEQUENTIAL DAMAGES... AGGREGATE LIABILITY STRICTLY LIMITED TO FEES PAID IN PRECEDING 12 MONTHS.',
+        relevanceExplanation: 'Market-standard mutual liability cap.',
+        riskLevel: 'low',
+      },
+    },
+    {
+      category: 'Indemnification',
+      term: 'Third-Party Claims Defense & Scope',
+      inDocA: 'Unilateral Vendor indemnity for all claims; zero Customer indemnity for Customer Data.',
+      inDocB: 'Mutual indemnity: Vendor indemnifies for software IP infringement; Customer indemnifies for Customer Data.',
+      riskDelta: 'improved',
+      analysis: 'Equalizes risk allocation and protects Vendor against claims originating from customer-furnished data.',
+      citationA: {
+        pageNumber: 3,
+        sectionNumber: 'Section 5.1 & 5.2',
+        quote: 'Vendor shall defend, indemnify, and hold harmless Customer... Customer provides no indemnification to Vendor.',
+        relevanceExplanation: 'One-sided indemnification obligation.',
+        riskLevel: 'high',
+      },
+      citationB: {
+        pageNumber: 3,
+        sectionNumber: 'Section 5.1 & 5.2',
+        quote: 'Vendor indemnifies Customer against direct IP infringement... Customer indemnifies Vendor against claims arising from Customer Data.',
+        relevanceExplanation: 'Reciprocal indemnity provisions.',
+        riskLevel: 'low',
+      },
+    },
+    {
+      category: 'Intellectual Property',
+      term: 'Background IP Ownership vs Licensing',
+      inDocA: 'Vendor assigns full proprietary copyright in pre-existing Background IP to Customer.',
+      inDocB: 'Vendor retains 100% ownership in Background IP; grants Customer perpetual non-exclusive license.',
+      riskDelta: 'improved',
+      analysis: 'Prevents customer from claiming exclusive ownership of Vendor core technology platform and utilities.',
+      citationA: {
+        pageNumber: 2,
+        sectionNumber: 'Section 3.2',
+        quote: 'Vendor hereby transfers and assigns full proprietary copyright ownership of such underlying assets to Customer.',
+        relevanceExplanation: 'Loss of core reusable intellectual property.',
+        riskLevel: 'high',
+      },
+      citationB: {
+        pageNumber: 2,
+        sectionNumber: 'Section 3.2 & 3.3',
+        quote: 'Vendor retains all right, title, and ownership in Vendor pre-existing software... Vendor grants Customer perpetual non-exclusive license.',
+        relevanceExplanation: 'Safe retention of core software assets.',
+        riskLevel: 'low',
+      },
+    },
+    {
+      category: 'Cash Flow & Payment',
+      term: 'Payment Terms & Dispute Withholding',
+      inDocA: 'Net 90 payment cycle with 60-day invoice waiver forfeiture and unilateral customer fee offset.',
+      inDocB: 'Net 30 payment cycle with 15-day dispute window and prompt payment of undisputed balances.',
+      riskDelta: 'improved',
+      analysis: 'Shortens collection cycle by 60 days and eliminates arbitrary invoice withholding.',
+      citationA: {
+        pageNumber: 1,
+        sectionNumber: 'Section 2.1 & 2.3',
+        quote: 'Customer shall remit undisputed payment within ninety (90) calendar days ("Net 90")... Customer reserves absolute right to withhold and offset.',
+        relevanceExplanation: 'Extremely prolonged payment timeline and offset risk.',
+        riskLevel: 'high',
+      },
+      citationB: {
+        pageNumber: 1,
+        sectionNumber: 'Section 2.1 & 2.2',
+        quote: 'Customer shall pay all undisputed invoices within thirty (30) days... notify Vendor in writing within 15 days of good faith dispute.',
+        relevanceExplanation: 'Predictable Net 30 commercial standard.',
+        riskLevel: 'low',
+      },
+    },
+  ],
+  addedClauses: [
+    'Section 3.2: Express Vendor Background IP Retention and Customer Non-Exclusive License',
+    'Section 5.2: Reciprocal Customer Data Indemnification Protection',
+    'Section 6.1: Mutual Consequential Damages and Lost Profits Waiver',
+    'Section 6.2: 12-Month Contract Value Aggregate Liability Cap for Both Parties',
+    'Section 8.2: Neutral Binding Arbitration under AAA Commercial Rules',
+  ],
+  removedClauses: [
+    'Section 2.2: 60-Day Invoice Submission Waiver and Forfeiture Clause',
+    'Section 2.3: Unilateral Customer Right to Offset and Withhold Disputed Fees',
+    'Section 3.2: Comprehensive Assignment of Vendor Pre-Existing Background IP',
+    'Section 6.1: Uncapped Vendor Consequential Damages Exposure',
+    'Section 7.2: Punitive 50% Monthly Invoice Penalty for 15-Minute Latency Dips',
+  ],
+  personaPerspective: 'business',
+};
+
+export const BENCHMARK_DOCUMENTS: LegalDocument[] = [
+  SAMPLE_DOC_A,
+  SAMPLE_DOC_B,
+  SAMPLE_DOC_C,
+  SAMPLE_DOC_D,
+];
+
